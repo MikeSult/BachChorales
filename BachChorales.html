@@ -1,0 +1,2523 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Bach Chorales</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+    <link href="MusicTheoryToneJS.css" rel="stylesheet" type="text/css">    
+
+    <script src="https://cdn.polyfill.io/v2/polyfill.js"></script>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+
+    <script type="text/javascript" src="https://www.guitarland.com/javascripts/Tone.js"></script>
+	<script type="text/javascript" src="https://www.guitarland.com/javascripts/StartAudioContext.js"></script>
+    <script src="https://www.guitarland.com/javascripts/instruments.js"></script>
+    <script src="https://www.guitarland.com/javascripts/Rhythm.js"></script>
+
+	<script src="../../../../Github/lilyPondAdapterJS/lilyPondAdapter.js"></script>
+
+    <script src="https://www.guitarland.com/javascripts/scaleSpelling.js"></script>
+    <script src="BachChorales.js"></script>
+    <script src="MusicAnalysis.js"></script>
+<!--
+    <script src="https://www.guitarland.com/javascripts/lilyPondAdapter.js"></script>
+    <script src="../PracticeRoom/instruments.js"></script>
+    <script src="../../../Github/RhythmJS/Rhythm.js"></script>
+
+    <script src="https://www.guitarland.com/javascripts/MusicAnalysis.js"></script>
+
+    <script src="https://unpkg.com/vue"></script>
+-->
+
+<style>
+.grid-container {
+  display: grid;
+  grid-template-columns: 2fr 3fr 1fr 1fr 1fr;
+  background-color: #2196F3;
+  padding: 1px;
+}
+
+.grid-item {
+  background-color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.8);
+  padding: 2px;
+/*  font-size: 30px; */
+    font-size: 1.6em;
+/*    background-color: #f5f5ff; */
+  text-align: center;
+}
+
+[tooltip]:before {
+    /* needed - do not touch */
+    content: attr(tooltip);
+    position: absolute;
+    opacity: 0;
+
+    /* customizable */
+    transition: all 0.15s ease;
+    padding: 10px;
+    color: #333;
+    border-radius: 10px;
+    box-shadow: 2px 2px 1px silver;
+    width: 300px;
+}
+
+[tooltip]:hover:before {
+    /* needed - do not touch */
+    opacity: 1;
+
+    /* customizable */
+    background: black;
+    color: white;
+/*    margin-top: -50px; */
+/*  font-size: 30px; */
+/*    font-size: 1.6em; */
+    margin-top: 50px;
+    margin-left: 20px;    
+    width: 300px;
+}
+
+[tooltip]:not([tooltip-persistent]):before {
+    pointer-events: none;
+}
+
+nav {
+    top:0;
+    width: 100%;
+    position: -webkit-sticky;
+    position: sticky;
+/*    position: relative; */
+}
+.fixed-nav nav {
+    position: fixed;
+    
+}
+</style>
+
+
+    
+<script>
+
+function tooltip(element, tip) {
+    var el = document.getElementById(element);
+    el.setAttribute('tooltip', tip);
+}
+
+
+
+function stopIt(){
+	Tone.Transport.stop();
+	Tone.Transport.cancel(0);
+	if(myTimeOut) {
+		clearTimeout(myTimeOut);
+	}
+	myTimeOut = null;
+}
+
+function updateTempo()  {
+//	    var tempo = document.myForm.tempo.value;
+//	    Tone.Transport.bpm.value = tempo   
+	Tone.Transport.bpm.value = document.myForm.tempo_slider.value;
+	var sliderTempo = document.getElementById("tempo_display");;
+	sliderTempo.innerHTML = document.myForm.tempo_slider.value;
+}
+
+function updateVolume()  {
+	sopranoSynth.volume.value = document.myForm.volume1_slider.value;
+}
+
+function updateMute()  {
+	var muteSoundBoolean = document.myForm.muteSound.checked;
+
+	sopranoMelodyLine.mute = muteSoundBoolean ? true: false;
+}
+
+function updateTheMute(whichOne)  {
+	if(sopranoMelodyLine == undefined){
+		return;
+	}
+//	console.log('whichOne='+whichOne);
+    var muteSoundBoolean = false;
+    if(whichOne == 'soprano') {    
+	    muteSoundBoolean = document.myForm.muteSound.checked;
+	    sopranoMelodyLine.mute = muteSoundBoolean ? true: false;
+	} else if(whichOne == 'alto') {
+	    muteSoundBoolean = document.myForm.muteSound2.checked;
+	    altoMelodyLine.mute = muteSoundBoolean ? true: false;
+	} else if(whichOne == 'tenor') {
+	    muteSoundBoolean = document.myForm.muteSound3.checked;
+	    tenorMelodyLine.mute = muteSoundBoolean ? true: false;
+	} else if(whichOne == 'bass') {
+		muteSoundBoolean = document.myForm.muteSound4.checked;
+	    bassMelodyLine.mute = muteSoundBoolean ? true: false;
+	}
+}
+
+function getMuteState() {
+    var muteState = [];
+    muteState.push(document.myForm.muteSound.checked);
+    muteState.push(document.myForm.muteSound2.checked);
+    muteState.push(document.myForm.muteSound3.checked);
+    muteState.push(document.myForm.muteSound4.checked);
+    return muteState;
+}
+function getSoloState() {
+    var soloState = [];
+    soloState.push(document.myForm.soloSound1.checked);
+    soloState.push(document.myForm.soloSound2.checked);
+    soloState.push(document.myForm.soloSound3.checked);
+    soloState.push(document.myForm.soloSound4.checked);
+    return soloState;
+}
+
+// NOTE: solo checkbox will override the mute checkbox
+function updateTheSolo(whichOne) {
+	if(sopranoMelodyLine == undefined){
+		return;
+	}
+    var soloSoundBoolean = false;
+    var muteSoundBoolean = false;
+    var muteState = getMuteState();
+    var soloState = getSoloState();
+    const sop = 0;
+    const alto = 1;
+    const tenor = 2;
+    const bass = 3;
+//    console.log('muteState='+muteState+' soloState='+soloState);
+    
+    if(whichOne == 'soprano') {    
+	    if(soloState[sop]) {
+			sopranoMelodyLine.mute = false;
+			document.myForm.muteSound.checked = false;
+	        altoMelodyLine.mute = soloState[alto] ? false: true;
+	        tenorMelodyLine.mute = soloState[tenor] ? false: true;
+	        bassMelodyLine.mute = soloState[bass] ? false: true;
+	    } else {
+	    // turn everyone back to their mute and solo setting
+            sopranoMelodyLine.mute = false;
+
+	        altoMelodyLine.mute = muteState[alto] ? true: false;
+	        if(soloState[alto]) {
+	            altoMelodyLine.mute = false;
+	        }
+	        tenorMelodyLine.mute = muteState[tenor] ? true: false;
+	        if(soloState[tenor]) {
+	            tenorMelodyLine.mute = false;
+	        }
+	        bassMelodyLine.mute = muteState[bass] ? true: false;
+	        if(soloState[bass]) {
+	            bassMelodyLine.mute = false;
+	        }
+	    }
+	} else if(whichOne == 'alto') {
+	    if(soloState[alto]) {
+	        sopranoMelodyLine.mute = soloState[sop] ? false: true;
+	        altoMelodyLine.mute = false;
+			document.myForm.muteSound2.checked = false;
+	        tenorMelodyLine.mute = soloState[tenor] ? false: true;
+	        bassMelodyLine.mute = soloState[bass] ? false: true;
+	    } else {
+	    // turn everyone back to their mute and solo setting
+	        sopranoMelodyLine.mute = muteState[sop] ? true: false;
+	        if(soloState[sop]) {
+	            sopranoMelodyLine.mute = false;
+	        }
+	        altoMelodyLine.mute = muteState[alto] ? true: false;
+	        if(soloState[alto]) {
+	            altoMelodyLine.mute = false;
+	        }
+	        tenorMelodyLine.mute = muteState[tenor] ? true: false;
+	        if(soloState[tenor]) {
+	            tenorMelodyLine.mute = false;
+	        }
+	        bassMelodyLine.mute = muteState[bass] ? true: false;
+	        if(soloState[bass]) {
+	            bassMelodyLine.mute = false;
+	        }
+	    }
+	} else if(whichOne == 'tenor') {
+	    if(soloState[tenor]) {
+	        sopranoMelodyLine.mute = soloState[sop] ? false: true;
+	        altoMelodyLine.mute = soloState[alto] ? false: true;
+	        tenorMelodyLine.mute = false;
+			document.myForm.muteSound3.checked = false;
+	        bassMelodyLine.mute = soloState[bass] ? false: true;
+	    } else {
+	    // turn everyone back to their mute and solo setting
+	        sopranoMelodyLine.mute = muteState[sop] ? true: false;
+	        if(soloState[sop]) {
+	            sopranoMelodyLine.mute = false;
+	        }
+	        altoMelodyLine.mute = muteState[alto] ? true: false;
+	        if(soloState[alto]) {
+	            altoMelodyLine.mute = false;
+	        }
+	        tenorMelodyLine.mute = muteState[tenor] ? true: false;
+	        if(soloState[tenor]) {
+	            tenorMelodyLine.mute = false;
+	        }
+	        bassMelodyLine.mute = muteState[bass] ? true: false;
+	        if(soloState[bass]) {
+	            bassMelodyLine.mute = false;
+	        }
+	    }
+
+	} else if(whichOne == 'bass') {
+	    if(soloState[bass]) {
+	        sopranoMelodyLine.mute = soloState[sop] ? false: true;
+	        altoMelodyLine.mute = soloState[alto] ? false: true;
+	        tenorMelodyLine.mute = soloState[tenor] ? false: true;
+
+	        bassMelodyLine.mute = false;
+			document.myForm.muteSound4.checked = false;
+	    } else {
+	    // turn everyone back to their mute and solo setting
+	        sopranoMelodyLine.mute = muteState[sop] ? true: false;
+	        if(soloState[sop]) {
+	            sopranoMelodyLine.mute = false;
+	        }
+	        altoMelodyLine.mute = muteState[alto] ? true: false;
+	        if(soloState[alto]) {
+	            altoMelodyLine.mute = false;
+	        }
+	        tenorMelodyLine.mute = muteState[tenor] ? true: false;
+	        if(soloState[tenor]) {
+	            tenorMelodyLine.mute = false;
+	        }
+	        bassMelodyLine.mute = muteState[bass] ? true: false;
+	        if(soloState[bass]) {
+	            bassMelodyLine.mute = false;
+	        }
+	    }
+	}
+}
+
+function updateTheVolume(whichOne)  {
+    if(whichOne == 'soprano') {
+        if(sopranoSynth) {
+	        sopranoSynth.volume.value = document.myForm.volume1_slider.value;
+	        var slider1 = document.getElementById("volume1_display");
+	        slider1.innerHTML = document.myForm.volume1_slider.value;
+	    }
+	} else if(whichOne == 'alto') {
+	    if(altoSynth) {
+	        altoSynth.volume.value = document.myForm.volume2_slider.value;
+	        var slider2 = document.getElementById("volume2_display");
+	        slider2.innerHTML = document.myForm.volume2_slider.value;
+	    }
+	} else if(whichOne == 'tenor') {
+	    if(tenorSynth) {
+	        tenorSynth.volume.value = document.myForm.volume3_slider.value;
+	        var slider3 = document.getElementById("volume3_display");
+	        slider3.innerHTML = document.myForm.volume3_slider.value;
+	    }
+	} else if(whichOne == 'bass') {
+	    if(bassSynth) {
+	        bassSynth.volume.value = document.myForm.volume4_slider.value;
+	        var slider4 = document.getElementById("volume4_display");
+	        slider4.innerHTML = document.myForm.volume4_slider.value;
+	    }
+	}
+}
+
+
+
+
+function getKey()  {
+	 return document.myForm.key.value;
+}
+function getTimeSignature()  {
+	return document.myForm.timeSig.value;
+}
+function getPickup()  {
+	return document.myForm.pickupLen.value;
+}
+
+function getTitle()  {
+	return document.myForm.title.value;
+}
+
+
+function updateLoop() {
+	if(document.getElementById('loopMelody').checked) {
+		myLoopBoolean = true;
+	} else {
+		myLoopBoolean = false;        
+	}
+}
+
+// dynamically create a menu of chorale choices
+// transition to using the opus instead of title to create menu
+function makeChoraleMenu() {
+    // create an array of titles
+    var oneTitle;
+    var titles = [];
+    BachChorales.forEach(element => {
+        oneTitle = getMetaOpus(element.meta);
+        if(oneTitle) {
+            titles.push(oneTitle);
+        } else {
+            titles.push(getMetaTitle(element.meta));
+        }
+        oneTitle = ''; //  = null?
+    });
+
+    var html = "<select id='BachChorales'>";
+    titles.forEach( title => {
+        html += "<option value='"+ title +"'>"+ title + "</option>";
+    });
+    html += "</select>";
+    return html;
+}
+
+// dynamically create a menu of selected chorale choices
+// transition to using the opus instead of title to create menu
+function makeShortChoraleMenu(start, end) {
+    // create an array of titles
+    var titles = [];
+    var myStart = Number(start);
+    var myEnd =  Number(end);
+    BachChorales.forEach((element, index) => {
+        if(index >= myStart && index <= myEnd ) {
+            oneTitle = getMetaOpus(element.meta);
+            if(oneTitle) {
+                titles.push(oneTitle);
+            } else {
+                titles.push(getMetaTitle(element.meta));
+            }
+            oneTitle = ''; //  = null?
+        }
+    })
+
+    var html = "<select id='BachChorales'>";
+    titles.forEach( title => {
+        html += "<option value='"+ title +"'>"+ title + "</option>";
+    });
+    html += "</select>";
+    document.getElementById('Menu').innerHTML = html;
+    var chorale_menu = document.getElementById('BachChorales');
+    chorale_menu.onchange = loadBachChorale;
+    loadBachChorale();
+}
+
+function makeChoraleRangeChoices() {
+    var numOfChorales = BachChorales.length;
+    var range = 20;
+    var rangeStart = 0;
+    var ranges = [];
+    var oneRange = [];
+    for(var i=0; i<numOfChorales; i++) {
+        if(i === rangeStart ) {
+            oneRange.push(i);
+        }
+        if(i === rangeStart+range-1) {
+            oneRange.push(i)
+            rangeStart += range;
+            ranges.push(oneRange);
+//            console.log(oneRange);
+            oneRange = [];
+        }
+    }
+    if(oneRange[0] && ((numOfChorales-1) != oneRange[1]) ) {
+            oneRange.push(numOfChorales-1);
+            ranges.push(oneRange);
+//            console.log("one range="+oneRange+" numOfChorales-1="+(numOfChorales-1));
+            oneRange = [];            
+    }
+    var html = '<p>Load Chorales into menu</p><p>'
+    var start;
+    var end;
+    ranges.forEach( element => {
+        html += ' <a href="javascript:makeShortChoraleMenu('+element[0]+','+element[1]+')">'+(element[0]+1)+'-'+(element[1]+1)+'</a> &nbsp;&nbsp;';
+    });
+    html += '</p>';
+    return html;
+}
+
+function loadPresetUserPhrase() {
+    var phrase = document.getElementById('userPhraseChoices').value;
+    document.getElementById('userPhrase').value = phrase;
+}
+
+
+function addMenu() {
+//    document.getElementById('Menu').innerHTML = makeChoraleMenu();
+    document.getElementById('Ranges').innerHTML = makeChoraleRangeChoices();
+    makeShortChoraleMenu(0,30);
+    var chorale_menu = document.getElementById('BachChorales');
+    chorale_menu.onchange = loadBachChorale;
+    loadBachChorale();
+//    var percentage = ((BachChorales.length/371)*100).toFixed(1);    
+//    document.getElementById('numChorales').innerHTML = '' + percentage + " percent ("+ BachChorales.length+')';
+}
+
+// var phraseLocs = ['2*1m + 4n','4*1m + 2n + 4n','6*1m', '8*1m + 2n + 4n'];
+function makePhraseMenu(phraseLocs) {
+    var html = "<select id='phraseMenu' onchange='loadPhrase()'>";
+    phraseLocs.forEach( (element, index) => {
+        html += "<option value='"+ element +"'> phrase "+ (index+1) + "</option>";
+    });
+    html += "</select>";
+    return html;
+}
+
+function makePhraseMenu2(phraseLocs,selectID) {
+    var html = "<select id='"+selectID+"'>";
+    phraseLocs.forEach( (element, index) => {
+        html += "<option value='"+ element +"'> phrase "+ (index+1) + "</option>";
+    });
+    html += "</select>";
+    return html;
+}
+
+/*---------------------------------
+var nameToSynth = {
+	metronome: instruments.makeMetronome,
+	clave: instruments.makeClave,
+	bell: instruments.makeBell,
+	conga: instruments.makeConga,
+	drum: instruments.makeDrum,
+	kick: instruments.makeKick,
+	kick2: instruments.makeKick2,
+	snare: instruments.makeSnare,
+	piano: instruments.makePiano,
+	bass: instruments.makeBass,
+	bass2: instruments.makeBass2,
+	brass: instruments.makeBrass,
+	steelPan: instruments.makeSteelPan,
+	marimba: instruments.makeMarimba,
+	coolGuy: instruments.makeCoolGuy,
+	treeTrunk: instruments.makeTreeTrunk,
+	electricCello: instruments.makeElectricCello,
+	kalimba: instruments.makeKalimba,
+	harmonics: instruments.makeHarmonics,
+	bassGuitar: instruments.makeBassGuitar,
+	softWindPart: instruments.makeSoftWindPart
+}
+//--------------------------------------*/
+
+function nameToSynth(name) {
+    var synth;
+	switch(name) {
+	  case 'piano':
+		synth = instruments.piano;
+		break;
+	  case 'bass':
+		synth = instruments.bass;
+		break;
+	  case 'brass':
+		synth = instruments.brass;
+		break;
+	  case 'coolGuy':
+		synth = instruments.coolGuy;
+		break;
+	  case 'softWindPart':
+		synth = instruments.softWindPart;
+		break;
+	  case 'steelPan':
+		synth = instruments.steelPan;
+		break;
+	  case 'marimba':
+		synth = instruments.marimba;
+		break;
+	  case 'electricCello':
+		synth = instruments.electricCello;
+		break;
+	  default:
+		synth = instruments.piano;
+	}
+	return synth;  
+}
+
+</script>
+
+</head>
+
+
+<body onload="addMenu();">
+<div id="Content">
+
+
+<form name="myForm">
+
+<nav id='playDiv'>
+<p id="Menu"></p>
+<p>
+<input type="button" class="playButton" VALUE="Play" id="button1">
+<input type="button" class="stopButton" VALUE="Stop" onclick="stopIt()">(click stop in between replays)  
+<input type="button" class="playButton" VALUE="Play Phrase" id="playPhrase">
+<span id="MenuPhrase"></span>
+<span id="MenuPhrase2"></span>
+
+<span class='Phrase'>
+<input type="checkbox" name="phraseRange" id="phraseRange" value="phraseRange">
+Play Range
+</span>
+<br>
+</p>
+
+<div class="smallFont">
+<p>
+	<div class="grid-container">
+	  <div class="grid-item">
+	  soprano | volume: 
+	  </div>
+	  <div class="grid-item">
+	  <input type='range' id='volume1_slider' name='volume1_slider' onchange="updateTheVolume('soprano')" value="-15" min="-60" max="0" size='400'>
+	  <span id='volume1_display' name='volume1_display'>-15</span> dB
+	  </div>
+	  
+	  <div class="grid-item">
+	  <select id='sopranoSynth' name='sopranoSynth' onchange="updateTheSynth('soprano')">
+	  <option value='piano'>piano</option>
+	  <option value='softWindPart'>softWindPart</option>
+	  <option value='brass'>brass</option>
+	  <option value='bass'>bass</option>
+	  <option value='coolGuy'>coolGuy</option>
+	  <option value='steelPan'>steelPan</option>
+	  <option value='marimba'>marimba</option>
+	  <option value='electricCello'>electricCello</option>
+	  </select>
+	  </div>
+	 
+	  <div class="grid-item">
+	  <label> (mute) <input type="checkbox" name="muteSound" id="muteSound" value="muteSound" onchange="updateTheMute('soprano')"></label>
+	  </div>
+	  
+	  <div class="grid-item">
+	  <label> (solo) <input type="checkbox" name="soloSound1" id="soloSound1" value="soloSound1" onchange="updateTheSolo('soprano')"></label>
+	  </div>
+	</div>
+	<div class="grid-container">
+	  <div class="grid-item">
+	  alto | volume: 
+	  </div>
+	  <div class="grid-item">
+	  <input type='range' id='volume2_slider' name='volume2_slider' onchange="updateTheVolume('alto')" value="-12" min="-60" max="0">
+	  <span id='volume2_display' name='volume2_display'>-12</span> dB
+	  </div>
+	  
+	  <div class="grid-item">
+	  <select id='altoSynth' name='altoSynth' onchange="updateTheSynth('alto')">
+	  <option value='piano'>piano</option>
+	  <option value='softWindPart'>softWindPart</option>
+	  <option value='brass'>brass</option>
+	  <option value='bass'>bass</option>
+	  <option value='coolGuy'>coolGuy</option>
+	  <option value='steelPan'>steelPan</option>
+	  <option value='marimba'>marimba</option>
+	  <option value='electricCello'>electricCello</option>
+	  </select>
+	  </div>
+	  
+	  <div class="grid-item">
+	  <label> (mute) <input type="checkbox" name="muteSound2" id="muteSound2" value="muteSound2" onchange="updateTheMute('alto')"></label>
+	  </div>
+	  
+	  <div class="grid-item">
+	  <label> (solo) <input type="checkbox" name="soloSound2" id="soloSound2" value="soloSound2" onchange="updateTheSolo('alto')"></label>
+	  </div>
+	</div>
+	<div class="grid-container">
+	  <div class="grid-item">
+	  tenor | volume: 
+	  </div>
+	  <div class="grid-item">  
+	  <input type='range' id='volume3_slider' name='volume3_slider' onchange="updateTheVolume('tenor')" value="-12" min="-60" max="0">
+	  <span id='volume3_display' name='volume3_display'>-12</span> dB
+	  </div>
+	  
+	  <div class="grid-item">
+	  <select id='tenorSynth' name='tenorSynth' onchange="updateTheSynth('tenor')">
+	  <option value='piano'>piano</option>
+	  <option value='softWindPart'>softWindPart</option>
+	  <option value='brass'>brass</option>
+	  <option value='bass'>bass</option>
+	  <option value='coolGuy'>coolGuy</option>
+	  <option value='steelPan'>steelPan</option>
+	  <option value='marimba'>marimba</option>
+	  <option value='electricCello'>electricCello</option>
+	  </select>
+	  </div>
+	  
+	  <div class="grid-item">
+	  <label> (mute) <input type="checkbox" name="muteSound3" id="muteSound3" value="muteSound3" onchange="updateTheMute('tenor')"></label>
+	  </div>
+	  
+	  <div class="grid-item">
+	  <label> (solo) <input type="checkbox" name="soloSound3" id="soloSound3" value="soloSound3" onchange="updateTheSolo('tenor')"></label>
+	  </div>
+	</div>
+	<div class="grid-container">
+	  <div class="grid-item">
+	  bass | volume: 
+	  </div>
+	  <div class="grid-item">  
+	  <input type='range' id='volume4_slider' name='volume4_slider' onchange="updateTheVolume('bass')" value="-6" min="-60" max="0">
+	  <span id='volume4_display' name='volume4_display'>-6</span> dB
+	  </div>
+	  
+	  <div class="grid-item">
+	  <select id='bassSynth' name='bassSynth' onchange="updateTheSynth('bass')">
+	  <option value='piano'>piano</option>
+	  <option value='softWindPart'>softWindPart</option>
+	  <option value='brass'>brass</option>
+	  <option value='bass'>bass</option>
+	  <option value='coolGuy'>coolGuy</option>
+	  <option value='steelPan'>steelPan</option>
+	  <option value='marimba'>marimba</option>
+	  <option value='electricCello'>electricCello</option>
+	  </select>
+	  </div>
+	  
+	  <div class="grid-item">
+	  <label> (mute) <input type="checkbox" name="muteSound4" id="muteSound4" value="muteSound4" onchange="updateTheMute('bass')"></label>
+	  </div>
+	  
+	  <div class="grid-item">
+	  <label> (solo) <input type="checkbox" name="soloSound4" id="soloSound4" value="soloSound4" onchange="updateTheSolo('bass')"></label>
+	  </div>
+	</div>
+
+</p>
+	<p>
+	<label> swing <input type="checkbox" name="swing" id="swing" value="swing"></label>
+	
+	 | tempo:
+	<input type='range' id='tempo_slider' name="tempo_slider" onchange="updateTempo()" min="60" max="200" value="90">
+	<span id='tempo_display' name='tempo_display'>120</span> bmp
+	
+	
+	| <label> loop <input type="checkbox" name="loopMelody" id="loopMelody" value="loopMelody"> (when running click 'stop').</label>
+	
+	</p>
+</div>	
+		
+</nav>
+
+<h1>Bach Chorales
+<img src="bach.jpg" alt="J.S. Bach" style="width:480px;height:270px;float:right;padding:1px;">
+</h1>
+
+<p>
+J.S. Bach's chorales have been used for centuries as <a href="https://en.wikipedia.org/wiki/Voice_leading" target="_blank">models for contrapuntal writing techniques</a>.  This page is devoted to making the chorales accessible for study.  The chorales are transcribed from "Johann Sebastian Bach - 371 Four-Part Chorales" Breiktkopf & Hartel Edition published by Associated Music Publishers, Inc. New York.  (purchased sometime in the 60's for $2.50, best value ever!).
+</p>
+
+<p>
+Select a chorale from the <a href='#playMenu'>menu</a> above. The selected chorale can be played using the Play button. For more detailed study each phrase of that chorale (from one fermata to the next) can be played separately using the Play Phrase button.
+</p>
+
+<p>A lilypond score in text form is generated for each chorale (<a href="#lilyPondScore">scroll to the bottom</a>) and it can be copied and pasted into the lilypond software to create a standard notation score in pdf.  Lilypond is free music notation software.  It can be found at the <a href="http://lilypond.org/website/index.html" target="_blank">lilypond website.</a> In addition to creating your own lilypond score, some of the chorale scores are available from the following links:
+&nbsp;&nbsp;<a href="BachChorales_1-20.pdf" target="_blank">BachChorales_1-20.pdf</a>
+&nbsp;&nbsp;<a href="BachChorales_21-40.pdf" target="_blank">BachChorales_21-40.pdf</a>
+&nbsp;&nbsp;<a href="BachChorales_41-60.pdf" target="_blank">BachChorales_41-60.pdf</a>
+&nbsp;&nbsp;<a href="BachChorales_61-80.pdf" target="_blank">BachChorales_61-80.pdf</a>
+&nbsp;&nbsp;<a href="BachChorales_81-100.pdf" target="_blank">BachChorales_81-100.pdf</a>
+</p>
+<p>
+<input type="checkbox" name="searchKey" id="searchKey" value="searchKey">
+<!--
+<span tooltip="Search 1" tooltip-persistent class="StatFormat" id='Search1'>Search by key:</span>
+-->
+<span class='Search1'>Search by key:</span>
+
+<select id='keySearch' name='keySearch'>
+<option value='c \major ' >c major</option>
+<option value='f \major ' >f major</option>
+<option value='bes \major ' >b-flat major</option>
+<option value='g \major ' >g major</option>
+<option value='d \major ' >d major</option>
+<option value='a \major ' >a major</option>
+<option value='ees \major ' >e-flat major</option>
+<option value='e \major ' >e major</option>
+<option value='aes \major ' >aes major</option>
+<option value='a \minor ' >a minor</option>
+<option value='d \minor ' >d minor</option>
+<option value='e \minor ' >e minor</option>
+<option value='b \minor ' >b minor</option>
+<option value='g \minor ' >g minor</option>
+<option value='c \minor ' >c minor</option>
+<option value='fis \minor ' >f-sharp minor</option>
+</select> 
+
+<br>
+<input type="checkbox" name="searchTime" id="searchTime" value="searchTime">
+<!--
+<span tooltip="Search 1" tooltip-persistent class="StatFormat" id='Search1'>
+Search by Time Signature:
+</span>
+-->
+
+<span class='Search1'>
+Search by Time Signature:
+</span>
+
+<select id='timeSearch' name='timeSearch'>
+<option value='3/4' >3/4</option>
+<option value='4/4' >4/4</option>
+<option value='3/2' >3/2</option>
+</select>
+<br>
+<input type="checkbox" name="searchPickup" id="searchPickup" value="searchPickup">
+<!--
+<span tooltip="Search 1" tooltip-persistent class="StatFormat" id='Search1'>
+Search by Pickup:
+</span>
+-->
+
+<span class='Search1'>Search by Pickup:</span>
+
+<select id='pickupSearch' name='pickupSearch'>
+<option value='' >no pickup</option>
+<option value='\partial 4' >Quarter note pickup</option>
+<option value='\partial 2' >Half note pickup</option>
+</select>
+
+<br>
+<!--
+<span tooltip="Search 1" tooltip-persistent class="StatFormat" id='Search1'>
+<input type='button' value='search' id='searchButton' name='searchButton'>
+</span>
+-->
+
+<input type='button' value='search' id='searchButton' name='searchButton'>
+
+</p>
+
+<p>
+<span class='Search2'><b>Search for Motif</b> Enter search phrase in lilypond format:</span>
+<input type="text" id="userPhrase" name="userPhrase" size=20  value="g4 g2 d'4 b4. a8 g4">
+<input type='button' class='playButton' id='playMotif' value='Play Motif'>
+<select id="userPhraseChoices" name="userPhraseChoices" onchange="loadPresetUserPhrase()">
+<option value="g4 g2 d'4 b4. a8 g4">additional searches</option>
+<option value="g4 a b a g fis e d">melody from soprano</option>
+<option value="fis4 b a g fis e2 fis4">melody from soprano</option>
+<option value="a4 a a a a a a">repeated notes in alto and tenor</option>
+<option value="e8 c a d16 c b4">common inner voice at cadence in tenor</option>
+<option value="a8 b c d4 g,">common bassline at cadence</option>
+<option value="d8 e fis g a4 a, d2.">common bassline</option>
+</select>
+
+<br>
+<input type='button' value='search phrase' id='searchPhrase' name='searchPhrase'>
+Search: 
+<input type="radio" name="searchVoice" id="searchSoprano" value="soprano" checked> Soprano |
+<input type="radio" name="searchVoice" id="searchAlto" value="alto"> Alto |
+<input type="radio" name="searchVoice" id="searchTenor" value="tenor"> Tenor |
+<input type="radio" name="searchVoice" id="searchBass" value="bass"> Bass
+<br>
+The search phrase is translated into an interval formula of half steps and all of the chorales are searched for that sequence of intervals in any key.  In the phrase search results, the number after the chorale number indicates the location of the note in the melody where the match was found (zero indexed).
+</p>
+<div id='SearchResults'></div>
+<div id='RhythmSearchResults'></div>
+<p>
+Analyze this Chorale:<br>
+<input type='button' value='melodic analysis' id='melodic_analysis' name='melodic_analysis'>
+<span class='Search3'>
+Melodic analysis of this voice: 
+</span>
+
+<!--
+<input type="radio" name="search_highnote_Voice" id="search_highnote_Soprano" value="soprano" checked> Soprano |
+<input type="radio" name="search_highnote_Voice" id="search_highnote_Alto" value="alto"> Alto |
+<input type="radio" name="search_highnote_Voice" id="search_highnote_Tenor" value="tenor"> Tenor |
+<input type="radio" name="search_highnote_Voice" id="search_highnote_Bass" value="bass"> Bass
+-->
+
+<input type="checkbox" name="analyzeSoprano" id="analyzeSoprano" value="soprano" checked> Soprano |
+<input type="checkbox" name="analyzeAlto" id="analyzeAlto" value="alto"> Alto |
+<input type="checkbox" name="analyzeTenor" id="analyzeTenor" value="tenor"> Tenor |
+<input type="checkbox" name="analyzeBass" id="analyzeBass" value="bass"> Bass
+
+<select id='numNotesOfPhrase'>
+<option value='2'>2</option>
+<option value='3'>3</option>
+<option value='4' selected>4</option>
+<option value='5'>5</option>
+<option value='6'>6</option>
+<option value='7'>7</option>
+<option value='8'>8</option>
+<option value='9'>9</option>
+<option value='10'>10</option>
+</select> number of notes in phrase search
+<br>
+
+<input type='button' value='chorale harmonic analysis' id='analyze_chorale' name='analyze_chorale'> 
+<select id='harmonyGridSize'>
+<option value='12'>Eighth note</option>
+<option value='24' selected>Quarter note</option>
+</select> 
+<span class='ChordAnalysis'>
+chord analysis (alpha version) The chords are added to the lilypond file (below).
+</span>
+
+</p>
+<div id='ChordResults'></div>
+<div id='choraleInfo'></div>
+<a name='playMenu'></a>
+<div id="Ranges"></div>
+
+<!-------------------
+<form name="myForm">
+
+<nav id='playDiv'>
+<p id="Menu"></p>
+
+<p><input type="button" class="playButton" VALUE="Play" id="button1">
+<input type="button" class="stopButton" VALUE="Stop" onclick="stopIt()">(click stop in between replays)  
+<input type="button" class="playButton" VALUE="Play Phrase" id="playPhrase">
+<span id="MenuPhrase"></span>
+<span id="MenuPhrase2"></span>
+
+<span class='Phrase'>
+<input type="checkbox" name="phraseRange" id="phraseRange" value="phraseRange">
+Play Range
+</span>
+
+<br>
+</p>
+</nav>
+
+<p>
+<div class="grid-container">
+  <div class="grid-item">
+  soprano | volume: 
+  </div>
+  <div class="grid-item">
+  <input type='range' id='volume1_slider' name='volume1_slider' onchange="updateTheVolume('soprano')" value="-15" min="-60" max="0" size='400'>
+  <span id='volume1_display' name='volume1_display'>-15</span> dB
+  </div>
+  
+  <div class="grid-item">
+  <select id='sopranoSynth' name='sopranoSynth' onchange="updateTheSynth('soprano')">
+  <option value='piano'>piano</option>
+  <option value='softWindPart'>softWindPart</option>
+  <option value='brass'>brass</option>
+  <option value='bass'>bass</option>
+  <option value='coolGuy'>coolGuy</option>
+  <option value='steelPan'>steelPan</option>
+  <option value='marimba'>marimba</option>
+  <option value='electricCello'>electricCello</option>
+  </select>
+  </div>
+ 
+  <div class="grid-item">
+  <label> (mute) <input type="checkbox" name="muteSound" id="muteSound" value="muteSound" onchange="updateTheMute('soprano')"></label>
+  </div>
+  
+  <div class="grid-item">
+  <label> (solo) <input type="checkbox" name="soloSound1" id="soloSound1" value="soloSound1" onchange="updateTheSolo('soprano')"></label>
+  </div>
+</div>
+<div class="grid-container">
+  <div class="grid-item">
+  alto | volume: 
+  </div>
+  <div class="grid-item">
+  <input type='range' id='volume2_slider' name='volume2_slider' onchange="updateTheVolume('alto')" value="-12" min="-60" max="0">
+  <span id='volume2_display' name='volume2_display'>-12</span> dB
+  </div>
+  
+  <div class="grid-item">
+  <select id='altoSynth' name='altoSynth' onchange="updateTheSynth('alto')">
+  <option value='piano'>piano</option>
+  <option value='softWindPart'>softWindPart</option>
+  <option value='brass'>brass</option>
+  <option value='bass'>bass</option>
+  <option value='coolGuy'>coolGuy</option>
+  <option value='steelPan'>steelPan</option>
+  <option value='marimba'>marimba</option>
+  <option value='electricCello'>electricCello</option>
+  </select>
+  </div>
+  
+  <div class="grid-item">
+  <label> (mute) <input type="checkbox" name="muteSound2" id="muteSound2" value="muteSound2" onchange="updateTheMute('alto')"></label>
+  </div>
+  
+  <div class="grid-item">
+  <label> (solo) <input type="checkbox" name="soloSound2" id="soloSound2" value="soloSound2" onchange="updateTheSolo('alto')"></label>
+  </div>
+</div>
+<div class="grid-container">
+  <div class="grid-item">
+  tenor | volume: 
+  </div>
+  <div class="grid-item">  
+  <input type='range' id='volume3_slider' name='volume3_slider' onchange="updateTheVolume('tenor')" value="-12" min="-60" max="0">
+  <span id='volume3_display' name='volume3_display'>-12</span> dB
+  </div>
+  
+  <div class="grid-item">
+  <select id='tenorSynth' name='tenorSynth' onchange="updateTheSynth('tenor')">
+  <option value='piano'>piano</option>
+  <option value='softWindPart'>softWindPart</option>
+  <option value='brass'>brass</option>
+  <option value='bass'>bass</option>
+  <option value='coolGuy'>coolGuy</option>
+  <option value='steelPan'>steelPan</option>
+  <option value='marimba'>marimba</option>
+  <option value='electricCello'>electricCello</option>
+  </select>
+  </div>
+  
+  <div class="grid-item">
+  <label> (mute) <input type="checkbox" name="muteSound3" id="muteSound3" value="muteSound3" onchange="updateTheMute('tenor')"></label>
+  </div>
+  
+  <div class="grid-item">
+  <label> (solo) <input type="checkbox" name="soloSound3" id="soloSound3" value="soloSound3" onchange="updateTheSolo('tenor')"></label>
+  </div>
+</div>
+<div class="grid-container">
+  <div class="grid-item">
+  bass | volume: 
+  </div>
+  <div class="grid-item">  
+  <input type='range' id='volume4_slider' name='volume4_slider' onchange="updateTheVolume('bass')" value="-6" min="-60" max="0">
+  <span id='volume4_display' name='volume4_display'>-6</span> dB
+  </div>
+  
+  <div class="grid-item">
+  <select id='bassSynth' name='bassSynth' onchange="updateTheSynth('bass')">
+  <option value='piano'>piano</option>
+  <option value='softWindPart'>softWindPart</option>
+  <option value='brass'>brass</option>
+  <option value='bass'>bass</option>
+  <option value='coolGuy'>coolGuy</option>
+  <option value='steelPan'>steelPan</option>
+  <option value='marimba'>marimba</option>
+  <option value='electricCello'>electricCello</option>
+  </select>
+  </div>
+  
+  <div class="grid-item">
+  <label> (mute) <input type="checkbox" name="muteSound4" id="muteSound4" value="muteSound4" onchange="updateTheMute('bass')"></label>
+  </div>
+  
+  <div class="grid-item">
+  <label> (solo) <input type="checkbox" name="soloSound4" id="soloSound4" value="soloSound4" onchange="updateTheSolo('bass')"></label>
+  </div>
+</div>
+</p>
+
+<p>
+<label> swing <input type="checkbox" name="swing" id="swing" value="swing"></label>
+
+ | tempo:
+<input type='range' id='tempo_slider' name="tempo_slider" onchange="updateTempo()" min="60" max="200" value="90">
+<span id='tempo_display' name='tempo_display'>120</span> bmp
+
+
+| <label> loop <input type="checkbox" name="loopMelody" id="loopMelody" value="loopMelody"> (when running click 'stop').</label>
+
+</p>
+
+<br><br>
+
+-->
+
+<br>lilypond note code for soprano below. 
+
+<br>
+<textarea rows=3 cols=90 id='sopranoInput'>
+\\relative c'' { a4 | a a a b g fis e b'4 cis b a gis8 fis gis4 fis e | 
+e'4 d cis b a a8 b cis4 b cis d cis b ais b2. 
+e,4 a b cis d e d8 cis b4 d cis b e4. d8 cis b a b cis4 b a2. }
+</textarea>
+
+
+<br>
+
+<br>lilypond note code for alto below. 
+
+<br>
+<textarea rows=3 cols=90 id='altoInput'>
+\\relative c' { e4 | fis e fis fis e dis b gis' a gis8 fis e2~e4 dis4 b | 
+cis'8 b a4 a gis a8 g fis gis a4 gis ais b8 a g4 fis8 e fis4 fis2. 
+e8 d cis4 d e fis8 gis a2 gis4 b a8 gis fis4 e fis8 gis a2 a4 gis e2. }
+</textarea>
+
+
+<br>
+
+<br>lilypond note code for tenor below. 
+
+<br>
+<textarea rows=3 cols=90 id='tenorInput'>
+\\relative c' { cis4 | cis cis8 b a gis fis4 b4. a8 gis4 e'4 e dis cis2 b4. a8 gis4 | 
+gis4  a8 b cis d e4 e d e e e fis8 b,4 ais8 b4 cis d2. 
+gis,4 a gis8 fis e e' d4 cis8 d e fis e4 
+fis fis8 e d cis b4 cis8 d e4. d8 cis fis b,8 e16 d cis2. }
+</textarea>
+
+<br>
+
+<br>lilypond note code for bass below. 
+
+<br>
+<textarea rows=3 cols=90 id='bassInput'>
+\\relative c' { a8 | gis fis4 cis d dis e b e,4 e'4 a4 b4 cis b8 a b4 b,4 e |
+cis4 fis8 gis a4 e cis8 a d4 cis8 d e4 cis b cis d8 g fis4 b,2.
+cis4 fis e8 d cis4 b a8 b cis d e4 b fis'8 gis a4 gis8 e a4~a8 gis8 fis4 e8 d e4 a,2. }
+</textarea>
+
+<input type="button" class="playButton" VALUE="Reset" id="buttonReset">
+</p>
+
+<a name="lilyPondScore"></a>
+<p>Full lilypond score output:<br>
+<textarea rows=10 cols=80 id="lilyPondCode"></textarea>
+<br>
+Paste this code into lilypond to view the music notation. <a href="UsingLilyPondAsInput.html#UsingLilypond" target="_blank">See instructions here</a>
+</p>
+<br><br>
+<p>
+<a name="guitarDuetScore"></a>
+<p>Guitar Duet lilypond score output:<br>
+<textarea rows=10 cols=80 id="guitarDuetCode"></textarea>
+</p>
+<br><br>
+<p>
+
+<a name="phraseScore"></a>
+<p>Single Phrase lilypond score output:<br>
+<textarea rows=10 cols=80 id="phraseScore"></textarea>
+</p>
+
+</form>
+
+
+<div id="dynamicDisplay"></div>
+<script>
+
+const nav = document.querySelector('#playDiv');
+const topOfControls = nav.offsetTop;
+
+function fixDiv() {
+    if(window.scrollY >= topOfControls) {
+        document.body.style.paddingTop = nav.offsetHeight + 'px';
+        document.body.classList.add('fixed-nav');
+    } else {
+        document.body.style.paddingTop = 0;
+        document.body.classList.remove('fixed-nav');        
+    }
+}
+
+window.addEventListener('scroll', fixDiv);
+
+
+/*------------------------------------------------
+function lilyTranslator() {
+	var sopranoLilynotes = document.getElementById('sopranoInput').value;
+	var altoLilynotes = document.getElementById('altoInput').value;
+	var tenorLilynotes = document.getElementById('tenorInput').value;
+	var bassLilynotes = document.getElementById('bassInput').value;
+        
+	var sopranoResults = lpAdapter.translateLilyToToneJS(sopranoLilynotes);
+	var altoResults = lpAdapter.translateLilyToToneJS(altoLilynotes);
+	var tenorResults = lpAdapter.translateLilyToToneJS(tenorLilynotes);
+	var bassResults = lpAdapter.translateLilyToToneJS(bassLilynotes);
+	var results = []
+	results.push(sopranoResults);
+	results.push(altoResults);
+	results.push(tenorResults);
+	results.push(bassResults);
+			 
+	var myLilyFile = makeLilyFile(results, lilyInputs);
+	// THIS IS WHERE I"D LIKE TO SAVE/OPEN in lilypond
+	// 1. save myLilyFile as 'uniqueNameUsingTitleandDate.ly'
+	// 2. launch lilyPond with open(uniqueNameUsingTitleandDate.ly)
+	// 3. compile to pdf
+	// 4. auto display in acrobat
+	
+	document.getElementById('lilyPondCode').value = myLilyFile;
+
+	// return the Tone.js code
+	return results;
+}
+
+function makeLilyFile(data) {
+//	console.log('data[0][0]='+data[0][0]+' data[0][1]='+data[0][1]);
+	var timeSignature = getTimeSignature();
+	var key = getKey();
+	var pickup = getPickup();
+	var title = getTitle();
+	var config = {
+		"keySig": key,
+		"timeSig": timeSignature,
+		"pickupLen": pickup,
+		"title": title
+	}
+
+	var myJSON = createChoraleJSON(data, config);
+//	console.log('myJSON.notes1='+myJSON.notes1+' myJSON.jsonType='+myJSON.jsonType);
+	lpAdapter.setChoraleScoreParameters(myJSON);
+	var myLilyFile = lpAdapter.createLilyPondFile();
+    return myLilyFile;
+}
+
+//-----------------------------------------------------*/
+    
+    var myStartTime = '0';
+    var myLoopStart = '0';
+    var loopTotalTime = '0';
+    var myLoopEnd = '12m';
+    var myLoopBoolean = false;
+    var sopranoSynth;
+    var altoSynth;
+    var tenorSynth;
+    var bassSynth;
+    var sopranoMelodyLine;
+    var altoMelodyLine;
+    var tenorMelodyLine;
+    var bassMelodyLine;
+    var notesAndRhythm;
+
+    function playIt() {
+        if(Tone.Transport.state === 'started') {
+            return;
+        }
+
+	    updateTempo();
+
+//        notesAndRhythm = loadBachChorale();
+//        var notesAndRhythm = lilyTranslator();
+//        console.log('notesAndRhythm[0,1]='+notesAndRhythm[0][1]+' notesAndRhythm[0,0]='+notesAndRhythm[0][0])
+
+        var sopranoMelody = Rhythm.mergeDurationsAndPitch(notesAndRhythm[0][1], notesAndRhythm[0][0]);
+        var altoMelody = Rhythm.mergeDurationsAndPitch(notesAndRhythm[1][1], notesAndRhythm[1][0]);
+        var tenorMelody = Rhythm.mergeDurationsAndPitch(notesAndRhythm[2][1], notesAndRhythm[2][0]);
+        var bassMelody = Rhythm.mergeDurationsAndPitch(notesAndRhythm[3][1], notesAndRhythm[3][0]);
+        
+        loopTotalTime = Rhythm.getTotalTime();
+//        console.log('loopTotalTime='+loopTotalTime);
+        myLoopEnd = loopTotalTime;
+        myLoopStart = '0';
+        if(!sopranoSynth) {
+            var synthName = document.myForm.sopranoSynth.value;
+            var synth1 = nameToSynth(synthName);
+		    sopranoSynth = synth1();
+		}
+//        updateTheSynth('soprano');
+
+        if(!altoSynth) {
+            var synthName = document.myForm.altoSynth.value;
+            var synth2 = nameToSynth(synthName);
+		    altoSynth = synth2();
+		}
+//        updateTheSynth('alto');
+
+        if(!tenorSynth) {
+            var synthName = document.myForm.tenorSynth.value;
+            var synth3 = nameToSynth(synthName);
+		    tenorSynth = synth3();
+		}
+//        updateTheSynth('tenor');
+
+        if(!bassSynth) {
+            var synthName = document.myForm.bassSynth.value;
+            var synth4 = nameToSynth(synthName);
+		    bassSynth = synth4();
+		}
+//        updateTheSynth('bass');
+
+		sopranoMelodyLine = new Tone.Part(function(time, value){
+//			console.log('value.note='+value.note+' value.duration='+value.duration+' time='+time);			
+			sopranoSynth.triggerAttackRelease(value.note, value.duration, time);
+			}, sopranoMelody ).start();
+		sopranoSynth.volume.value = -10;
+
+		sopranoMelodyLine.loopStart = myLoopStart;
+	    sopranoMelodyLine.loopEnd = myLoopEnd;
+		sopranoMelodyLine.loop = myLoopBoolean;
+
+		altoMelodyLine = new Tone.Part(function(time, value){
+//			console.log('value.note='+value.note+' value.duration='+value.duration+' time='+time);			
+			altoSynth.triggerAttackRelease(value.note, value.duration, time);
+			}, altoMelody ).start();
+		altoSynth.volume.value = -10;
+
+		altoMelodyLine.loopStart = myLoopStart;
+	    altoMelodyLine.loopEnd = myLoopEnd;
+		altoMelodyLine.loop = myLoopBoolean;
+
+		tenorMelodyLine = new Tone.Part(function(time, value){
+//			console.log('value.note='+value.note+' value.duration='+value.duration+' time='+time);			
+			tenorSynth.triggerAttackRelease(value.note, value.duration, time);
+			}, tenorMelody ).start();
+		tenorSynth.volume.value = -10;
+
+		tenorMelodyLine.loopStart = myLoopStart;
+	    tenorMelodyLine.loopEnd = myLoopEnd;
+		tenorMelodyLine.loop = myLoopBoolean;
+
+		bassMelodyLine = new Tone.Part(function(time, value){
+//			console.log('value.note='+value.note+' value.duration='+value.duration+' time='+time);			
+			bassSynth.triggerAttackRelease(value.note, value.duration, time);
+			}, bassMelody ).start();
+		bassSynth.volume.value = -5;
+
+		bassMelodyLine.loopStart = myLoopStart;
+	    bassMelodyLine.loopEnd = myLoopEnd;
+		bassMelodyLine.loop = myLoopBoolean;
+
+//		var tempo = document.myForm.tempo.value;
+		var tempo = document.myForm.tempo_slider.value;
+		Tone.Transport.bpm.value = tempo;   
+	//    Tone.Transport.setLoopPoints(0, "12m");
+	//    Tone.Transport.loopStart = '0';
+	//    Tone.Transport.loopEnd = '12m';
+	//    Tone.Transport.loop = false;
+        if(document.getElementById('swing').checked) {
+		    Tone.Transport.swing = 0.3;
+		} else {
+		    Tone.Transport.swing = 0;
+		}
+		updateTheMute('soprano');
+		updateTheSolo('soprano');
+		updateTheVolume('soprano');
+
+		updateTheMute('alto');
+		updateTheSolo('alto');
+		updateTheVolume('alto');
+
+		updateTheMute('tenor');
+		updateTheSolo('tenor');
+		updateTheVolume('tenor');
+
+		updateTheMute('bass');
+		updateTheSolo('bass');
+		updateTheVolume('bass');
+
+		updateTempo();
+		updateLoop();
+		Tone.Transport.position = Tone.Time('0').toBarsBeatsSixteenths();
+		Tone.Transport.start('+0.1');    
+		
+		// ------ add this to all projects that use Rhythm module --------
+		autoStop(myLoopBoolean);
+    }
+
+var myTimeOut;    
+function autoStop(myLoopBoolean) {
+//	var stopTime = Rhythm.getTotalTime(); // in measure format
+	var stopTime = myLoopEnd;
+	var stopTimeMs = Tone.Time(stopTime).toMilliseconds ( );
+//	console.log('stopTime='+stopTime+' stopTimeMs='+stopTimeMs);
+	if(!myLoopBoolean) {
+		myTimeOut = window.setTimeout(stopIt, (stopTimeMs+1000));
+	}
+}
+
+
+
+function playMotif() {
+	if(Tone.Transport.state === 'started') {
+		return;
+	}
+//	var tempo = document.myForm.tempo_slider.value;
+//	Tone.Transport.bpm.value = tempo;   
+
+	updateTempo();
+
+	// get the motif
+    const motif = document.querySelector("#userPhraseChoices").value;
+	const motif_lilypond = `\\relative c'  { ${motif} }`;
+//	const motif_lilypond = "\\relative c'  { "+motif+" }";
+	console.log(motif_lilypond);
+	
+	// process motif for ToneJS
+	const motif_tonejs = lpAdapter.translateLilyToToneJS(motif_lilypond);
+//	const notes_tonejs = motif_tonejs[0];
+//	const durs_tonejs = motif_tonejs[1];
+//	console.log(notes_tonejs);
+//	console.log(durs_tonejs);
+	var motif_objects = Rhythm.mergeDurationsAndPitch(motif_tonejs[1], motif_tonejs[0]);
+	
+	// play the motif
+	var synthName = document.myForm.sopranoSynth.value;
+	var synth1 = nameToSynth(synthName);
+	sopranoSynth = synth1();
+	motifMelodyLine = new Tone.Part(function(time, value){
+//			console.log('value.note='+value.note+' value.duration='+value.duration+' time='+time);			
+		sopranoSynth.triggerAttackRelease(value.note, value.duration, time);
+		}, motif_objects ).start();
+	sopranoSynth.volume.value = -10;
+
+	Tone.Transport.start('+0.1');    
+	
+	// call stop when over
+	var stopTime = Rhythm.getTotalTime();
+	var stopTimeMs = Math.floor(stopTime*1000);
+//	console.log('stopTime='+stopTime+' stopTimeMs='+stopTimeMs);
+	if(!myLoopBoolean) {
+		myTimeOut = window.setTimeout(stopIt, (stopTimeMs+1000));
+	}
+
+}
+
+function playPhrase() {
+	if(Tone.Transport.state === 'started') {
+		return;
+	}
+//	var tempo = document.myForm.tempo_slider.value;
+//	Tone.Transport.bpm.value = tempo;   
+
+	updateTempo();
+
+//        notesAndRhythm = loadBachChorale();
+//        var  = lilyTranslator();
+//        console.log('notesAndRhythm[0,1]='+[0][1]+' notesAndRhythm[0,0]='+notesAndRhythm[0][0])
+	var sopranoMelody = Rhythm.mergeDurationsAndPitch(notesAndRhythm[0][1], notesAndRhythm[0][0]);
+	var altoMelody = Rhythm.mergeDurationsAndPitch(notesAndRhythm[1][1], notesAndRhythm[1][0]);
+	var tenorMelody = Rhythm.mergeDurationsAndPitch(notesAndRhythm[2][1], notesAndRhythm[2][0]);
+	var bassMelody = Rhythm.mergeDurationsAndPitch(notesAndRhythm[3][1], notesAndRhythm[3][0]);
+
+	// get start and end (loop) values from the phrase menu2
+	// ---------------------------------------------------------------------
+    var usePhraseRange = document.getElementById('phraseRange').checked;
+    if(usePhraseRange) {
+        var menu1 = document.getElementById('phraseMenu');
+        var menu2 = document.getElementById('phraseMenu2');
+        // if the menus are out of order, fix it.
+        if(menu1.selectedIndex > menu2.selectedIndex) {
+            var tempIndex = menu1.selectedIndex;
+            menu1.selectedIndex = menu2.selectedIndex;
+            menu2.selectedIndex = tempIndex;
+        }
+	    var phraseData = menu1.value.split(',')
+	    var phraseStart = phraseData[0];
+	    var phraseData2 = menu2.value.split(',')
+	    var phraseEnd = phraseData2[1];    
+    } else {
+	    var phraseData = document.getElementById('phraseMenu').value.split(',')
+	    var phraseStart = phraseData[0];
+	    var phraseEnd = phraseData[1];
+	}
+
+//        console.log('phraseStart='+phraseStart+' phraseEnd='+phraseEnd);
+	var startPosition = phraseStart;
+	//----------------------------------------------------------------------
+	
+	loopTotalTime = Rhythm.getTotalTime();
+	myLoopEnd = loopTotalTime;
+	
+	myLoopEnd = phraseEnd;
+	myLoopStart = phraseStart;
+
+	var synthName = document.myForm.sopranoSynth.value;
+	var synth1 = nameToSynth(synthName);
+	sopranoSynth = synth1();
+
+	var synthName = document.myForm.altoSynth.value;
+	var synth2 = nameToSynth(synthName);
+	altoSynth = synth2();
+
+	var synthName = document.myForm.tenorSynth.value;
+	var synth3 = nameToSynth(synthName);
+	tenorSynth = synth3();
+
+	var synthName = document.myForm.bassSynth.value;
+	var synth4 = nameToSynth(synthName);
+	bassSynth = synth4();
+
+
+
+	sopranoMelodyLine = new Tone.Part(function(time, value){
+//			console.log('value.note='+value.note+' value.duration='+value.duration+' time='+time);			
+		sopranoSynth.triggerAttackRelease(value.note, value.duration, time);
+		}, sopranoMelody ).start();
+	sopranoSynth.volume.value = -10;
+
+	sopranoMelodyLine.loopStart = myLoopStart;
+	sopranoMelodyLine.loopEnd = myLoopEnd;
+	sopranoMelodyLine.loop = myLoopBoolean;
+
+	altoMelodyLine = new Tone.Part(function(time, value){
+//			console.log('value.note='+value.note+' value.duration='+value.duration+' time='+time);			
+		altoSynth.triggerAttackRelease(value.note, value.duration, time);
+		}, altoMelody ).start();
+	altoSynth.volume.value = -10;
+
+	altoMelodyLine.loopStart = myLoopStart;
+	altoMelodyLine.loopEnd = myLoopEnd;
+	altoMelodyLine.loop = myLoopBoolean;
+
+	tenorMelodyLine = new Tone.Part(function(time, value){
+//			console.log('value.note='+value.note+' value.duration='+value.duration+' time='+time);			
+		tenorSynth.triggerAttackRelease(value.note, value.duration, time);
+		}, tenorMelody ).start();
+	tenorSynth.volume.value = -10;
+
+	tenorMelodyLine.loopStart = myLoopStart;
+	tenorMelodyLine.loopEnd = myLoopEnd;
+	tenorMelodyLine.loop = myLoopBoolean;
+
+	bassMelodyLine = new Tone.Part(function(time, value){
+//			console.log('value.note='+value.note+' value.duration='+value.duration+' time='+time);			
+		bassSynth.triggerAttackRelease(value.note, value.duration, time);
+		}, bassMelody ).start();
+	bassSynth.volume.value = -5;
+
+	bassMelodyLine.loopStart = myLoopStart;
+	bassMelodyLine.loopEnd = myLoopEnd;
+	bassMelodyLine.loop = myLoopBoolean;
+
+//		var tempo = document.myForm.tempo.value;
+//		Tone.Transport.bpm.value = tempo;   
+//	    Tone.Transport.setLoopPoints(phraseStart, phraseEnd);
+	Tone.Transport.loopStart = phraseStart;
+	Tone.Transport.loopEnd = phraseEnd;
+//	    Tone.Transport.loop = false;
+	if(document.getElementById('swing').checked) {
+		Tone.Transport.swing = 0.3;
+	} else {
+		Tone.Transport.swing = 0;
+	}
+	updateTheMute('soprano');
+	updateTheVolume('soprano');
+	updateTheSolo('soprano');
+
+	updateTheMute('alto');
+	updateTheVolume('alto');
+	updateTheSolo('also');
+
+	updateTheMute('tenor');
+	updateTheVolume('tenor');
+	updateTheSolo('tenor');
+
+	updateTheMute('bass');
+	updateTheVolume('bass');
+	updateTheSolo('bass');
+
+	updateTempo();
+	updateLoop();
+	Tone.Transport.position = startPosition;
+	Tone.Transport.start('+0.1');    
+	
+	// ------ add this to all projects that use Rhythm module --------
+	autoStop(myLoopBoolean);
+}
+//---------------------------------------------------------------------
+//---------------------------------------------------------------------
+var synth1;
+var synth2;
+var synth3;
+var synth4;
+
+function updateTheSynth(whichOne)  {
+    var synthName;
+    if(whichOne == 'soprano') {
+        if(sopranoSynth) {
+            // how to dispose synth?
+            sopranoSynth = null;
+            synth1 = null;
+            synthName = document.myForm.sopranoSynth.value;
+            synth1 = nameToSynth(synthName);
+		    sopranoSynth = synth1();
+	        document.getElementById("volume1_slider").value = sopranoSynth.volume.value;
+	        document.getElementById("volume1_display").value = sopranoSynth.volume.value;
+	    }
+	} else if(whichOne == 'alto') {
+	    if(altoSynth) {
+            // how to dispose synth?
+            altoSynth = null;
+            synth2 = null;
+            synthName = document.myForm.altoSynth.value;
+            synth2 = nameToSynth(synthName);
+		    altoSynth = synth2();
+	        document.getElementById("volume2_slider").value = altoSynth.volume.value;
+	        document.getElementById("volume2_display").value = altoSynth.volume.value;
+	    }
+	} else if(whichOne == 'tenor') {
+	    if(tenorSynth) {
+            // how to dispose synth?
+            tenorSynth = null;
+            synth3 = null;
+            synthName = document.myForm.tenorSynth.value;
+            synth3 = nameToSynth(synthName);
+		    tenorSynth = synth3();
+	        document.getElementById("volume3_slider").value = tenorSynth.volume.value;
+	        document.getElementById("volume3_display").value = tenorSynth.volume.value;
+	    }
+	} else if(whichOne == 'bass') {
+	    if(bassSynth) {
+            // how to dispose synth?
+            bassSynth = null;
+            synth4 = null;
+            synthName = document.myForm.bassSynth.value;
+            synth4 = nameToSynth(synthName);
+		    bassSynth = synth4();
+	        document.getElementById("volume4_slider").value = bassSynth.volume.value;
+	        document.getElementById("volume4_display").value = bassSynth.volume.value;
+	    }
+	}
+}
+
+
+    
+function createChoraleJSON(voicesNotesAndDurations, config, lilyArray) {
+    var timeSig;
+    var tempo;    
+    var keySig;
+    var clef;
+    var pickup;
+    var pickupLen;
+    var title;
+    var opus;
+    var composer;
+    var lilyInput1 = '';
+    var lilyInput2 = '';
+    var lilyInput3 = '';
+    var lilyInput4 = '';
+	var romanNumerals = '';
+	var chords = '';
+	var lyrics = '';
+    
+    if(config !== undefined) {
+		timeSig = (config.timeSig == undefined || config.timeSig == "")? "4/4": config.timeSig;
+		tempo = (config.tempo == undefined || config.tempo == "")? ' \"moderato\" 4 = 90': config.tempo;
+		keySig = (config.keySig == undefined || config.keySig == "")?  "c \\major": config.keySig;
+	    clef = (config.clef == undefined || config.clef == "")? "treble": config.clef;
+	    pickup = (config.pickup == undefined || config.pickup == "")?  "": config.pickup;
+        pickupLen = (pickup != '')? pickup.slice(9): "";
+        if(pickupLen != '') {
+            pickupLen = pickupLen.includes('n')? pickupLen: pickupLen + 'n';
+        }
+        pickup = pickup.includes('partial')? "": pickup;
+	    title = (config.title == undefined || config.title == "")? "Assignment": config.title;
+	    opus = (config.opus == undefined || config.opus == "")? "": config.opus;
+	    composer = (config.composer == undefined || config.composer == "")? "J.S. Bach": config.composer;
+		romanNumerals = (config.romanNumerals == undefined || config.romanNumerals == "")? "": config.romanNumerals;
+		chords = (config.chords == undefined || config.chords == "")? "": config.chords;
+		lyrics = (config.lyrics == undefined || config.lyrics == "")? "": config.lyrics;
+	} else {
+		timeSig = '4/4';
+		tempo = ' \"moderato\" 4 = 90';
+		keySig = 'c \\major';
+		clef = "treble";
+		pickup = "";
+		pickupLen = '';
+		title = "Assignment";
+		opus = "";
+		composer = "J.S. Bach";
+		romanNumerals = "";
+		chords = "";
+		lyrics = "";
+	}
+	if(lilyArray !== undefined) {
+	    lilyInput1 = lilyArray[0].slice();
+	    lilyInput2 = lilyArray[1].slice();
+	    lilyInput3 = lilyArray[2].slice();
+	    lilyInput4 = lilyArray[3].slice();   
+	}
+
+//    console.log('romanNumerals='+romanNumerals);
+    var timeNow = new Date(Date.now());
+    var timeStamp = timeNow.toDateString();
+    
+    var jsonConfig = {
+	    "jsonType": "chorale",
+		"keySig": keySig,
+		"clef": clef,
+		"timeSig": timeSig,
+		"title": title,
+		"name": title,
+		"opus": opus,
+		"composer": composer,
+		"romanNumerals": romanNumerals,
+		"chords": chords,
+		"lyrics": lyrics,
+		"notes1":voicesNotesAndDurations[0][0].slice(),
+		"durations1":voicesNotesAndDurations[0][1].slice(),
+
+		"notes2":voicesNotesAndDurations[1][0].slice(),
+		"durations2":voicesNotesAndDurations[1][1].slice(),
+
+		"notes3":voicesNotesAndDurations[2][0].slice(),
+		"durations3":voicesNotesAndDurations[2][1].slice(),
+
+		"notes4":voicesNotesAndDurations[3][0].slice(),
+		"durations4":voicesNotesAndDurations[3][1].slice(),
+
+		"pickup": pickup,
+		"pickupLength": pickupLen,
+		"tempo": tempo,
+
+		'lilyInputNotes1': lilyInput1,
+		'lilyInputNotes2': lilyInput2,
+		'lilyInputNotes3': lilyInput3,
+		'lilyInputNotes4': lilyInput4
+		
+	};
+	return jsonConfig
+}
+
+
+function flatten(arr) {
+    return arr.reduce(function(a,b) {
+        return a.concat(Array.isArray(b) ? flatten(b) : b);
+    }, []);
+}
+
+/*---------------- moved to MusicAnalysis.js ----------------------------
+// current:    
+// meta: "\\title Chorale no.2 \\key a \\major \\time 4/4 \\partial 4",
+
+function getMetaTitle(dataString) {
+    var pos1 = dataString.indexOf("\\title");
+    var pos2 = dataString.indexOf("\\key");
+    if(pos1 < 0 || pos2 < 0)
+        return '';
+    return dataString.slice(pos1+7, pos2);
+}
+
+function getMetaKey(dataString) {
+    var pos1 = dataString.indexOf("\\key");
+    var pos2 = dataString.indexOf("\\time");
+    if(pos1 < 0 || pos2 < 0)
+        return '';
+    return dataString.slice(pos1+5, pos2);
+}
+
+function getMetaTimeSignature(dataString) {
+    var pos1 = dataString.indexOf("\\time");
+    var pos2 = dataString.indexOf("\\partial");
+    if(pos2 < 0) {
+        return dataString.slice(pos1+6);
+    } else {
+        return dataString.slice(pos1+6, pos2);
+    }
+}
+
+function getMetaPickup(dataString) {
+    var pos1 = dataString.indexOf("\\partial");
+    if(pos1 > 0) {
+        return dataString.slice(pos1);
+    } else {
+        return '';
+    }
+}
+
+function getChoraleIndex() {
+	var title = document.getElementById("BachChorales").value;
+	var titleArray = title.split('no.');
+	var indexString = titleArray[1];
+	return Number(indexString)-1;
+
+}
+//---------------------------------------*/
+
+
+// user can load new chorale into page for playing and score generation
+// from each chorate json extract meta data and voices data
+/*---------------------------------
+//var index = document.getElementById("BachChorales").selectedIndex;
+var index = 0;
+var meta = BachChorales[index].meta;
+var sopranoLily = BachChorales[index].soprano;
+var altoLily = BachChorales[index].alto;
+var tenorLily = BachChorales[index].tenor;
+var bassLily = BachChorales[index].bass;
+-----------------------------------------*/
+// global so it can be used repeatly without recalculating
+let phraseScore = '';
+function loadBachChorale() {
+	var index = getChoraleIndex();
+	var meta = BachChorales[index].meta;
+	var sopranoLily = BachChorales[index].soprano;
+	var altoLily = BachChorales[index].alto;
+	var tenorLily = BachChorales[index].tenor;
+	var bassLily = BachChorales[index].bass;
+
+    var phraseLocs = lpAdapter.calcPhraseLengths(bassLily);
+    var menuCode = makePhraseMenu(phraseLocs);
+    document.getElementById('MenuPhrase').innerHTML = menuCode;
+    var menuCode2 = makePhraseMenu2(phraseLocs, 'phraseMenu2');
+    document.getElementById('MenuPhrase2').innerHTML = menuCode2;
+	var timeSignature = getMetaTimeSignature(meta);
+	var key = [];
+	key.push(getMetaKey(meta));
+	var pickup = getMetaPickup(meta);
+	var title = getMetaTitle(meta);
+	var opus = getMetaOpus(meta);
+	var composer = getMetaComposer(meta);
+
+	var info = '<h2>'+title+'<br>key signature of '+key+' in '+timeSignature+'';
+	if(pickup)
+	    info += ', pickup = '+pickup+'';
+	    
+	info += '</h2>'
+    document.getElementById('choraleInfo').innerHTML = info;
+    document.getElementById('ChordResults').innerHTML = '';
+    document.getElementById('RhythmSearchResults').innerHTML = '';
+    
+	document.getElementById('sopranoInput').value = sopranoLily;
+	document.getElementById('altoInput').value = altoLily;
+	document.getElementById('tenorInput').value = tenorLily;
+	document.getElementById('bassInput').value = bassLily;
+	var lilyInputs = []
+    lilyInputs.push(sopranoLily.slice());
+    lilyInputs.push(altoLily.slice());
+    lilyInputs.push(tenorLily.slice());
+//	console.log('tenorLily='+tenorLily);
+    lilyInputs.push(bassLily.slice());
+//    console.log('lilyInputs='+lilyInputs)
+	var sopranoResults = lpAdapter.translateLilyToToneJS(sopranoLily);
+	var altoResults = lpAdapter.translateLilyToToneJS(altoLily);
+	var tenorResults = lpAdapter.translateLilyToToneJS(tenorLily);
+	var bassResults = lpAdapter.translateLilyToToneJS(bassLily);
+	var results = []
+	results.push(sopranoResults);
+	results.push(altoResults);
+	results.push(tenorResults);
+	results.push(bassResults);
+//    console.log('Before make...: lilyInputs='+lilyInputs);			 
+	var myLilyFile = makeLilyFileMeta(results, meta, lilyInputs);
+	// THIS IS WHERE I'D LIKE TO SAVE/OPEN in lilypond
+	// 1. save myLilyFile as 'uniqueNameUsingTitleandDate.ly'
+	// 2. launch lilyPond with open(uniqueNameUsingTitleandDate.ly)
+	// 3. compile to pdf
+	// 4. auto display in acrobat
+	// NOTE: see autograder.js node app project 
+	
+	// create shorter phrase files, from one fermata to the next.
+	let phraseLocNums = findPhrases(bassLily);
+	// phraseScore is a global
+//    console.log('before divide...: lilyInputs='+lilyInputs);			 
+	phraseScore = divideScoreIntoPhrases(lilyInputs, phraseLocNums);
+//    console.log('phraseScore='+phraseScore);	
+	document.getElementById('lilyPondCode').value = myLilyFile;
+
+	var guitarDuetLilyFile = lpAdapter.getGuitarDuetScore();
+	document.getElementById('guitarDuetCode').value = guitarDuetLilyFile;
+
+
+	//-------------------------------------------------------------
+	// get the index from the phrase menu's onChange handler 
+	// when user changes phrase menu, initialize phraseIndex = 0
+	let phraseIndex = 0;
+
+	//-------------------------------------------------------------
+	let metaSplit = meta.split('\\composer');
+//	console.log(metaSplit);
+	let metaPhraseTitleIncluded = metaSplit[0] + '(phrase '+(phraseIndex+1)+') ';
+	metaPhraseTitleIncluded += '\\composer ' // put \\composer back in
+	metaPhraseTitleIncluded += metaSplit[1]; // add the rest of meta
+    //--------------------------------------------------------------*/
+
+//	let newText = '(phrase '+(phraseIndex+1)+') ';
+//	let metaPhraseNumIncluded = addToMeta('\\composer', newText);
+	let myPhraseLilyFile = makeLilyFileMeta(results, metaPhraseTitleIncluded, phraseScore[phraseIndex]);
+	document.getElementById('phraseScore').value = myPhraseLilyFile;
+	
+//	experimentsChordObjects(phraseIndex);
+
+	// return the Tone.js code
+	notesAndRhythm = results.slice();
+	return results;
+}
+
+function addToMeta(splitTag, additionalText){
+	let metaSplit = meta.split(splitTag);
+//	console.log(metaSplit);
+	let metaPhraseTitleIncluded = metaSplit[0] + additionalText;
+	metaPhraseTitleIncluded += splitTag + ' '; // put \\composer back in
+	metaPhraseTitleIncluded += metaSplit[1]; // add the rest of meta
+	return metaPhraseTitleIncluded;
+}
+
+
+function loadBachChoraleWithAnalysis(harmonies, romanNumerals) {
+//	console.log(harmonies);
+	var index = getChoraleIndex();
+	var meta = BachChorales[index].meta;
+	var sopranoLily = BachChorales[index].soprano;
+	var altoLily = BachChorales[index].alto;
+	var tenorLily = BachChorales[index].tenor;
+	var bassLily = BachChorales[index].bass;
+
+    var phraseLocs = lpAdapter.calcPhraseLengths(bassLily);
+    var menuCode = makePhraseMenu(phraseLocs);
+    document.getElementById('MenuPhrase').innerHTML = menuCode;
+    var menuCode2 = makePhraseMenu2(phraseLocs, 'phraseMenu2');
+    document.getElementById('MenuPhrase2').innerHTML = menuCode2;
+	var timeSignature = getMetaTimeSignature(meta);
+	var key = [];
+	key.push(getMetaKey(meta));
+	var pickup = getMetaPickup(meta);
+	var title = getMetaTitle(meta);
+	var opus = getMetaOpus(meta);
+	var composer = getMetaComposer(meta);
+
+	var info = '<h2>'+title+'<br>key signature of '+key+' in '+timeSignature+'';
+	if(pickup)
+	    info += ', pickup = '+pickup+'';
+	    
+	info += '</h2>'
+    document.getElementById('choraleInfo').innerHTML = info;
+//    document.getElementById('ChordResults').innerHTML = '';
+    document.getElementById('RhythmSearchResults').innerHTML = '';
+    
+	document.getElementById('sopranoInput').value = sopranoLily;
+	document.getElementById('altoInput').value = altoLily;
+	document.getElementById('tenorInput').value = tenorLily;
+	document.getElementById('bassInput').value = bassLily;
+	var lilyInputs = []
+    lilyInputs.push(sopranoLily.slice());
+    lilyInputs.push(altoLily.slice());
+    lilyInputs.push(tenorLily.slice());
+    lilyInputs.push(bassLily.slice());
+
+	var sopranoResults = lpAdapter.translateLilyToToneJS(sopranoLily);
+	var altoResults = lpAdapter.translateLilyToToneJS(altoLily);
+	var tenorResults = lpAdapter.translateLilyToToneJS(tenorLily);
+	var bassResults = lpAdapter.translateLilyToToneJS(bassLily);
+	var results = []
+	results.push(sopranoResults);
+	results.push(altoResults);
+	results.push(tenorResults);
+	results.push(bassResults);
+			 
+	var myLilyFile = makeLilyFileMetaHarmonicAnalysis(results, meta, lilyInputs, harmonies, romanNumerals);
+	// THIS IS WHERE I'D LIKE TO SAVE/OPEN in lilypond
+	// 1. save myLilyFile as 'uniqueNameUsingTitleandDate.ly'
+	// 2. launch lilyPond with open(uniqueNameUsingTitleandDate.ly)
+	// 3. compile to pdf
+	// 4. auto display in acrobat
+	// NOTE: see autograder.js node app project 
+	
+	document.getElementById('lilyPondCode').value = myLilyFile;
+	document.getElementById('guitarDuetCode').value = lpAdapter.getGuitarDuetScore();
+
+	// return the Tone.js code
+	notesAndRhythm = results.slice();
+	return results;
+}
+
+function loadPhrase(){
+	var index = getChoraleIndex();
+	var meta = BachChorales[index].meta;
+
+	let phraseIndex = document.getElementById('phraseMenu').selectedIndex;
+	let metaSplit = meta.split('\\composer');
+	console.log('phraseIndex='+phraseIndex);
+	let metaPhraseTitleIncluded = metaSplit[0] + '(phrase '+(phraseIndex+1)+') ';
+	metaPhraseTitleIncluded += '\\composer '
+	metaPhraseTitleIncluded += metaSplit[1];
+    //--------------------------------------------------------------
+	let myPhraseLilyFile = makeLilyFileMeta(notesAndRhythm, metaPhraseTitleIncluded, phraseScore[phraseIndex]);
+	document.getElementById('phraseScore').value = myPhraseLilyFile;
+
+	experimentsChordObjects(phraseIndex);
+}
+
+
+function experimentsChordObjects(phraseIndex){
+	// phraseScore is global, created by LoadChorale()
+	let numOfPhrases = phraseScore.length;
+	console.log('numOfPhrases = '+numOfPhrases);
+	let chordObjectsFullChorale = [];
+	//----------------------------------------------------
+	for(let i=0; i<numOfPhrases; i++){
+		let phraseScale = makeScaleFromPhraseNotes(phraseScore[i]);
+	    let chordObjects = loadChordArray(phraseScore[i]);
+	    let index = getChoraleIndex();
+	    let meta = BachChorales[index].meta;
+	    let myKey = getMetaKey(meta);
+	    chordObjects = addChordObjectProperty(chordObjects, 'localKey', phraseScale);
+	    chordObjects = addChordObjectProperty(chordObjects, 'key', myKey);
+	    chordObjects = addChordObjectProperty(chordObjects, 'meta', meta);
+	    let lastChordPos = chordObjects.length-1;
+
+	    // lastChordPos index might not be the last chord, sometimes the chord is a longer duration 
+	    // than a quarternote (i.e. half, dotted half, whole) so the fermata should be placed
+	    // on all of the adjacent locations prior that are the same chord as the final chord. 
+	    let move_index = chordObjects.length-1;
+        do{
+	        chordObjects = addSingleChordObjectProperty(chordObjects, 'isFermata', true, move_index);
+		    move_index--;
+
+	    } while(chordObjects[lastChordPos].fullName == chordObjects[move_index].fullName);
+
+	    let chordLocs = findLastXChords(chordObjects, 3);
+	    let cadenceIndex = checkForCadence(chordObjects, chordLocs); 
+
+        console.log('chordLocs='+chordLocs+' cadenceIndex='+cadenceIndex+'\ncadenceType =\n'+cadenceNames[cadenceIndex]);
+        console.log('======= phrase no.'+(i+1)+' =========\n');
+		chordObjectsFullChorale.push(chordObjects);
+	}
+	console.log(chordObjectsFullChorale);
+    //-----------------------------------------------------------------*/
+
+	/*----------------------------------------------------
+	// ---------- experiments with chordObjects --------------------------
+	let phraseScale = makeScaleFromPhraseNotes(phraseScore[phraseIndex]);
+	let chordObjects = loadChordArray(phraseScore[phraseIndex]);
+	var index = getChoraleIndex();
+	let meta = BachChorales[index].meta;
+	let myKey = getMetaKey(meta);
+	chordObjects = addChordObjectProperty(chordObjects, 'localKey', phraseScale);
+	chordObjects = addChordObjectProperty(chordObjects, 'key', myKey);
+	chordObjects = addChordObjectProperty(chordObjects, 'meta', meta);
+	let lastChordPos = chordObjects.length-1;
+
+	// lastChordPos index might not be the last chord, sometimes the chord is a longer duration 
+	// than a quarternote (i.e. half, dotted half, whole) so the fermata should be placed
+	// on all of the adjacent locations prior that are the same chord as the final chord. 
+	let move_index = chordObjects.length-1;
+    do{
+	    chordObjects = addSingleChordObjectProperty(chordObjects, 'isFermata', true, move_index);
+		move_index--;
+
+	} while(chordObjects[lastChordPos].fullName == chordObjects[move_index].fullName)
+
+	// now the chordObjects can be used to distinguish II-V-I from V-I-IV etc.
+	
+//	let VtoI = findV_I(chordObjects);
+//	let IItoVtoI = findII_V_I(chordObjects);
+//	let circles = findCircleProgressions(chordObjects);
+	let chordLocs = findLastXChords(chordObjects, 3);
+	let cadenceIndex = checkForCadence(chordObjects, chordLocs); 
+
+    console.log('chordLocs='+chordLocs+' cadenceIndex='+cadenceIndex+'\ncadenceType =\n'+cadenceNames[cadenceIndex]);
+    // V_I (authentic), V_VI (deceptive), IV_I (plagal), I_V (half)
+
+	// printOut_V_I_Report(chordObjects, VtoI);
+	// printOut_II_V_I_Report(chordObjects, IItoVtoI);
+	// printOutCircles(chordObjects,circles);
+	// -------------------------------------------------------------------
+    //-----------------------------------------------------------------*/
+}
+
+function loadColorizedBachChorale() {
+	var index = getChoraleIndex();
+	var meta = BachChorales[index].meta;
+
+	var sopranoLily = document.getElementById('sopranoInput').value;
+	var altoLily = document.getElementById('altoInput').value;
+	var tenorLily = document.getElementById('tenorInput').value;
+	var bassLily = document.getElementById('bassInput').value;
+
+//    var phraseLocs = lpAdapter.calcPhraseLengths(bassLily);
+//    var menuCode = makePhraseMenu(phraseLocs);
+//    document.getElementById('MenuPhrase').innerHTML = menuCode;
+//    var menuCode2 = makePhraseMenu2(phraseLocs, 'phraseMenu2');
+//    document.getElementById('MenuPhrase2').innerHTML = menuCode2;
+	var timeSignature = getMetaTimeSignature(meta);
+	var key = [];
+	key.push(getMetaKey(meta));
+	var pickup = getMetaPickup(meta);
+	var title = getMetaTitle(meta);
+	var opus = getMetaOpus(meta);
+	var composer = getMetaComposer(meta);
+
+	var info = '<h2>'+title+'<br>key signature of '+key+' in '+timeSignature+'';
+	if(pickup) {
+	    info += ', pickup = '+pickup+'';
+	}
+	info += '</h2>'
+    document.getElementById('choraleInfo').innerHTML = info;
+//    document.getElementById('ChordResults').innerHTML = '';
+//    document.getElementById('RhythmSearchResults').innerHTML = '';
+    
+	document.getElementById('sopranoInput').value = sopranoLily;
+	document.getElementById('altoInput').value = altoLily;
+	document.getElementById('tenorInput').value = tenorLily;
+	document.getElementById('bassInput').value = bassLily;
+	var lilyInputs = []
+
+    var analyzeSoprano = document.getElementById('analyzeSoprano').checked;
+    var analyzeAlto = document.getElementById('analyzeAlto').checked;
+    var analyzeTenor = document.getElementById('analyzeTenor').checked;
+    var analyzeBass = document.getElementById('analyzeBass').checked;
+    console.log('analyzeSoprano='+analyzeSoprano+' analyzeAlto='+analyzeAlto+' analyzeTenor='+analyzeTenor+' analyzeBass='+analyzeBass);
+    if(analyzeSoprano) {
+        lilyInputs.push(markedSoprano.slice());    
+    } else {
+        lilyInputs.push(sopranoLily.slice());    
+    }
+    if(analyzeAlto) {
+        lilyInputs.push(markedAlto.slice());    
+    } else {
+        lilyInputs.push(altoLily.slice());    
+    }
+    if(analyzeTenor) {
+        lilyInputs.push(markedTenor.slice());    
+    } else {
+        lilyInputs.push(tenorLily.slice());    
+    }
+    if(analyzeBass) {
+        lilyInputs.push(markedBass.slice());    
+    } else {
+        lilyInputs.push(bassLily.slice());    
+    }
+    
+	var sopranoResults = lpAdapter.translateLilyToToneJS(sopranoLily);
+	var altoResults = lpAdapter.translateLilyToToneJS(altoLily);
+	var tenorResults = lpAdapter.translateLilyToToneJS(tenorLily);
+	var bassResults = lpAdapter.translateLilyToToneJS(bassLily);
+	var results = []
+	results.push(sopranoResults);
+	results.push(altoResults);
+	results.push(tenorResults);
+	results.push(bassResults);
+			 
+	var myLilyFile = makeLilyFileMeta(results, meta, lilyInputs);
+	// THIS IS WHERE I"D LIKE TO SAVE/OPEN in lilypond
+	// 1. save myLilyFile as 'uniqueNameUsingTitleandDate.ly'
+	// 2. launch lilyPond with open(uniqueNameUsingTitleandDate.ly)
+	// 3. compile to pdf
+	// 4. auto display in acrobat
+	// NOTE: see autograder.js node app project 
+	
+	document.getElementById('lilyPondCode').value = myLilyFile;
+
+	// return the Tone.js code
+	notesAndRhythm = results.slice();
+	return results;
+}
+
+
+function makeLilyFileMeta(data, meta, lilyArray) {
+//	console.log('data[0][0]='+data[0][0]+' data[0][1]='+data[0][1]);
+//    console.log('meta='+meta);
+	var timeSignature = getMetaTimeSignature(meta);
+	var key = [];
+	key.push(getMetaKey(meta));
+	var pickup = getMetaPickup(meta);
+	var title = getMetaTitle(meta);
+	var opus = getMetaOpus(meta);
+	var composer = getMetaComposer(meta);
+//	console.log('key='+key+'\npickup='+pickup+'\ntimeSignature='+timeSignature+'\ntitle='+title);
+	var config = {
+		"keySig": key,
+		"timeSig": timeSignature,
+		"pickup": pickup,
+		"title": title,
+		"opus": opus,
+		"composer": composer
+	}
+	var myJSON = createChoraleJSON(data, config, lilyArray);
+//    console.log('myJSON.keySig='+myJSON.keySig);
+//	console.log('myJSON.notes1='+myJSON.notes1+' myJSON.jsonType='+myJSON.jsonType);
+	lpAdapter.setChoraleScoreParameters(myJSON);
+	var myLilyFile = lpAdapter.createLilyPondFile();
+    return myLilyFile;
+}
+
+function makeLilyFileMetaHarmonicAnalysis(data, meta, lilyArray, harmonies, romanNumerals) {
+//	console.log('data[0][0]='+data[0][0]+' data[0][1]='+data[0][1]);
+//    console.log('meta='+meta);
+//    console.log(harmonies);
+	var timeSignature = getMetaTimeSignature(meta);
+	var key = [];
+	key.push(getMetaKey(meta));
+	var pickup = getMetaPickup(meta);
+	var title = getMetaTitle(meta);
+	var opus = getMetaOpus(meta);
+	var composer = getMetaComposer(meta);
+//	console.log('key='+key+'\npickup='+pickup+'\ntimeSignature='+timeSignature+'\ntitle='+title);
+	var config = {
+		"keySig": key,
+		"timeSig": timeSignature,
+		"pickup": pickup,
+		"title": title,
+		"opus": opus,
+		"composer": composer,
+		"chords": harmonies,
+		"romanNumerals": romanNumerals,
+		"lyrics": ""
+	}
+	var myJSON = createChoraleJSON(data, config, lilyArray);
+//    console.log('myJSON.romanNumerals='+myJSON.romanNumerals);
+//	console.log('myJSON.notes1='+myJSON.notes1+' myJSON.jsonType='+myJSON.jsonType);
+	lpAdapter.setChoraleScoreParameters(myJSON);
+	var myLilyFile = lpAdapter.createLilyPondFile();
+    return myLilyFile;
+}
+
+function doSearch() {
+    var doKeySearch = false;
+    var doTimeSearch = false;
+    var doPickupSearch = false;
+    var whichOne = '';
+    var data = [];
+    if(document.getElementById('searchKey').checked) {
+        doKeySearch = true;
+        var keySig = document.getElementById('keySearch').value;
+        whichOne += '1';
+        data.push(keySig)
+    } else {
+        whichOne += '0';    
+        data.push(' ')
+    }
+    if(document.getElementById('searchTime').checked) {
+        doTimeSearch = true;
+        var timeSig = document.getElementById('timeSearch').value;
+        whichOne += '1';
+        data.push(timeSig)
+    } else {
+        whichOne += '0';    
+        data.push(' ')
+    }
+    if(document.getElementById('searchPickup').checked) {
+        doPickupSearch = true;
+        var pickup = document.getElementById('pickupSearch').value;
+        whichOne += '1';
+        data.push(pickup)
+    } else {
+        whichOne += '0';    
+        data.push(' ')
+    }
+//    console.log('whichOne='+whichOne);    
+    ShowMultiSearchResults(whichOne, data);
+}
+
+// this function is not used
+function doPhraseSearch() {
+//    var search_phrase = [0,0,7,4,2,0,0,2,4,2];
+    var search_phrase = [0,5,7,9];
+//    var search_phrase = [0,2,4,2];
+    var index = getChoraleIndex();
+    var oneChorale = BachChorales[index];
+	var lilyNoteCode = oneChorale.soprano;
+	var NotesAndDurs = lpAdapter.translateLilyToToneJS(lilyNoteCode)
+	var notes = NotesAndDurs[0].slice();
+	var durations = NotesAndDurs[1].slice();
+	var midiNums = tranlateNoteNamesToMIDI(notes);
+	var phrase_match_indices = SearchForPhrase(search_phrase, midiNums);
+//	console.log('doPhraseSearch() midiNums='+midiNums+' phrase_match_indices='+phrase_match_indices);
+	
+	doPhraseDeepSearch();
+}
+
+function getRadioButtonChoice(groupName) {
+    var whichValue = '';
+    var myRadioButtons = document.getElementsByName(groupName);
+    for(var i = 0; i < myRadioButtons.length; i++) {
+        if(myRadioButtons[i].checked == true) {
+            whichValue =  myRadioButtons[i].value;
+        }
+    }
+    return whichValue;
+}
+
+function doPhraseDeepSearch() {
+    var titleArray, indexString, foundIndex; 
+    var tagID = 'SearchResults';
+    var userPhrase = "\\relative c' { ";
+    userPhrase += document.getElementById('userPhrase').value;
+    userPhrase += " }";
+    var phrase = translateLilyPhraseToIntervalArray(userPhrase);
+//    console.log('phrase='+phrase)
+    var whichVoice = getRadioButtonChoice('searchVoice');
+//    console.log('whichVoice='+whichVoice);
+    var report = SearchAllChorales(phrase, whichVoice);
+    var firstTime = true;
+    var html = '<p><b>Phrase Search Results:</b><br>interval phrase: '+ phrase + '<br>';
+    report.forEach(element => {
+        if(firstTime) {
+			titleArray = element[0][0].split('no.');
+			indexString = titleArray[1];
+			foundIndex = Number(indexString)-1;
+			html += ' <a href="javascript:makeShortChoraleMenu('+foundIndex+','+foundIndex+')">'+element+'</a>  &nbsp;&nbsp; ';
+            firstTime = false;
+//            console.log('element[0][0]='+element[0][0]+' typeof(element[0])='+typeof(element[0]));
+        } else {
+			titleArray = element[0][0].split('no.');
+			indexString = titleArray[1];
+			foundIndex = Number(indexString)-1;
+			html += ' <a href="javascript:makeShortChoraleMenu('+foundIndex+','+foundIndex+')">'+element+'</a>  &nbsp;&nbsp; ';
+        }
+    });
+    html += '</p>';
+
+    document.getElementById(tagID).innerHTML = html;
+//    console.log( 'report:\n\n'+html );
+    
+}
+
+function doDeepSearch() {
+    doPhraseDeepSearch();
+    doRhythmDeepSearch();
+}
+
+var markedSoprano = '';
+var markedAlto = '';
+var markedTenor = '';
+var markedBass = '';
+
+function doMelodicAnalysis() {
+    var tagID = 'RhythmSearchResults';
+    var numNotesOfPhrase = document.getElementById('numNotesOfPhrase').value;
+    var index = getChoraleIndex();
+    var element = BachChorales[index]
+
+    markedSoprano = markupLilyCode(element.soprano, numNotesOfPhrase);
+    markedAlto = markupLilyCode(element.alto, numNotesOfPhrase);
+    markedTenor = markupLilyCode(element.tenor, numNotesOfPhrase);
+    markedBass = markupLilyCode(element.bass, numNotesOfPhrase);
+
+	var lilyInputs = []
+    var analyzeSoprano = document.getElementById('analyzeSoprano').checked;
+    var analyzeAlto = document.getElementById('analyzeAlto').checked;
+    var analyzeTenor = document.getElementById('analyzeTenor').checked;
+    var analyzeBass = document.getElementById('analyzeBass').checked;
+    console.log('analyzeSoprano='+analyzeSoprano+' analyzeAlto='+analyzeAlto+' analyzeTenor='+analyzeTenor+' analyzeBass='+analyzeBass);
+    if(analyzeSoprano) {
+        lilyInputs.push(markedSoprano.slice());    
+    } else {
+        lilyInputs.push(element.soprano.slice());    
+    }
+    if(analyzeAlto) {
+        lilyInputs.push(markedAlto.slice());    
+    } else {
+        lilyInputs.push(element.alto.slice());    
+    }
+    if(analyzeTenor) {
+        lilyInputs.push(markedTenor.slice());    
+    } else {
+        lilyInputs.push(element.tenor.slice());    
+    }
+    if(analyzeBass) {
+        lilyInputs.push(markedBass.slice());    
+    } else {
+        lilyInputs.push(element.bass.slice());    
+    }
+
+	// for now just use soprano and Alto
+	var intervalReport = intervalAnalysis(element.soprano, element.alto);
+	var parallelIntervals = findParallelIntervals(element.soprano, element.alto);
+	console.log('parallelIntervals='+parallelIntervals);
+	
+	var html = '<p>';
+/*---------------------------------------------------------
+	html += 'Highest note is ' + highNoteInfo[0];
+	html += ' located at index ' + highNoteInfo[1] + ' (total notes = '+ notes.length + ')';;
+	html += '<br>Lowest note is ' + lowNoteInfo[0];
+	html += ' located at index ' + lowNoteInfo[1];
+	html += '<br>range = ' + range + ' half steps';
+	html += '<br>widest melodic interval is ' + largestMelodicIntervalInfo[0] + ' half steps'; 
+	html += ' located at index ' + largestMelodicIntervalInfo[1];
+    html += getMostCommonPhraseHTML(commonPhrases);
+//--------------------------------------------------------------*/
+	
+	html += getIntervalAnalysisHTML(intervalReport);
+	html += "</p>";
+	
+//	console.log('highNoteInfo[1]='+highNoteInfo[1]+' lowNoteInfo[1]='+lowNoteInfo[1]);
+    document.getElementById(tagID).innerHTML = html;
+    loadColorizedBachChorale();
+    return intervalReport;
+}
+
+function markupLilyCode(lilyNoteCode,numNotesOfPhrase) {
+	var NotesAndDurs = lpAdapter.translateLilyToToneJS(lilyNoteCode)
+	var notes = NotesAndDurs[0].slice();
+	var durations = NotesAndDurs[1].slice();
+
+	var highNoteInfo = findHighNotes(notes);
+	var lowNoteInfo = findLowNotes(notes);
+	var largestMelodicIntervalInfo = findWidestMelodicInterval(notes);
+	var range = noteNameToMIDI(highNoteInfo[0])-noteNameToMIDI(lowNoteInfo[0]);
+	var commonPhrases = findMostCommonPhrase(notes, numNotesOfPhrase);
+	var phrases = commonPhrases[0];
+	var commonIndices = commonPhrases[1];
+	
+	// create a indices/color array for the lilypond score
+	var markupIndices = lpAdapter.createMarkupColorIndices(lilyNoteCode, highNoteInfo, lowNoteInfo, largestMelodicIntervalInfo, commonPhrases);
+    var markedMelody = lpAdapter.MarkupLilyPondMelody(lilyNoteCode, markupIndices);
+    return markedMelody;
+}
+
+function getIntervalAnalysisHTML(intervalArray) {
+    const len = intervalArray.length;
+    var html = '<p>Intervals between soprano and alto:<br>';
+    for(let i=0; i<len; i++) {
+        // TODO: needs work
+        // by ignoring consecutive same intervals this doesn't show 
+        // legit two in a row of the same interval name
+        if(i>0 && (intervalArray[i] != intervalArray[i-1]) ) {
+            html += intervalArray[i] + ', ';
+        } else if(i==0) {
+            html += intervalArray[i] + ', ';
+        }
+    }
+    return html;
+}
+
+function getMostCommonPhraseHTML(commonPhrases) {
+	var phrases = commonPhrases[0];
+	var commonIndices = commonPhrases[1];
+	var html = '';
+    if(commonIndices[0].length == 1) {
+        html += '<br>no multiple phrase matches.';
+    } else {
+        phrases.forEach( (element, index) => {
+            html += '<br>most common ('+(index+1)+' of '+phrases.length+') phrase='+ element;
+            html += ' at '+commonIndices[0].length+' locations '+ commonIndices[index];
+        });
+    }
+    return html;
+}
+
+
+function doRhythmDeepSearch() {
+    var titleArray, indexString, foundIndex; 
+    var tagID = 'RhythmSearchResults';
+    var userPhrase = "\\relative c' { ";
+    userPhrase += document.getElementById('userPhrase').value;
+    userPhrase += " }";
+	var rhythmNumbers = translateLilyRhythmsToNumberArray(userPhrase);
+//    console.log('rhythmNumbers='+rhythmNumbers)
+    var whichVoice = getRadioButtonChoice('searchVoice');
+
+    var report = SearchAllChoralesRhythm(rhythmNumbers, whichVoice);
+//    console.log('whichVoice='+whichVoice);
+
+    var firstTime = true;
+    var html = '<p><b>Rhythm Search Results:</b><br>Rhythm phrase: '+ rhythmNumbers + '<br>';
+    report.forEach(element => {
+        if(firstTime) {
+			titleArray = element[0][0].split('no.');
+			indexString = titleArray[1];
+			foundIndex = Number(indexString)-1;
+			html += ' <a href="javascript:makeShortChoraleMenu('+foundIndex+','+foundIndex+')">'+element+'</a>  &nbsp;&nbsp; ';
+//            html += element;
+            firstTime = false;
+//            console.log('element[0][0]='+element[0][0]+' typeof(element[0])='+typeof(element[0]));
+        } else {
+			titleArray = element[0][0].split('no.');
+			indexString = titleArray[1];
+			foundIndex = Number(indexString)-1;
+			html += ' <a href="javascript:makeShortChoraleMenu('+foundIndex+','+foundIndex+')">'+element+'</a>  &nbsp;&nbsp; ';
+
+//            html += ',&nbsp; &nbsp; &nbsp;  ' + element;
+        }
+    });
+    html += '</p>';
+
+    document.getElementById(tagID).innerHTML = html;
+//    console.log( 'report:\n\n'+html );
+    
+}
+
+function handleChoraleHarmonicAnalysis(){
+	const displayArea = 'ChordResults';
+	// my version of a tuple of formats
+	var fourChordFormats = doChoraleHarmonicAnalysis();
+	var chordAnalysisLilyPond = fourChordFormats[0].slice();
+	var romanNumeralsLilyPond = fourChordFormats[1].slice();
+	var chordProgression = fourChordFormats[2].slice(); // array of regular chord symbols
+	var chordGrid = fourChordFormats[3].slice(); // array pitches used in the analysis
+//	console.log("in handleChoraleHarmonicAnalysis()="+romanNumeralsLilyPond);
+//	console.log(chordGrid);
+    document.getElementById(displayArea).innerHTML = makeHTML_ChordProgressionDisplay(chordProgression);
+	loadBachChoraleWithAnalysis(chordAnalysisLilyPond, romanNumeralsLilyPond);
+
+}
+
+// demo cases ----------------------------------------------
+    
+var dowopSoprano = "\\relative c'' { d8 c c2. d8 c c2 r8 e8 e d d2 r8 a'8 a g g2. }";
+var dowopAlto = "\\relative c' { g'2 g e e a a f g4 f }";
+var dowopTenor = "\\relative c' { e2 e c c f f d e4 d }";
+var dowopBass = "\\relative c { c4 c c c8 b a4 a a a8 c f,4 f f f8 a g4 g g g8 b }";
+
+
+var defaultValueSoprano = "\\relative c' { c2 e g2. g4 g2 g a1 g }";
+var defaultValueAlto = "\\relative c' { g2 c e d e d e d d1 }";
+var defaultValueTenor = "\\relative c { e2 g c b c g g fis b1 }";
+var defaultValueBass = "\\relative c { c2 c c4 e g f e d c b c a d2 g,1 }";
+function resetDefault() {
+//    document.getElementById('sopranoInput').value = defaultValueSoprano;
+//    document.getElementById('altoInput').value = defaultValueAlto;
+//    document.getElementById('tenorInput').value = defaultValueTenor;
+//    document.getElementById('bassInput').value = defaultValueBass;
+
+    document.getElementById('sopranoInput').value = dowopSoprano;
+    document.getElementById('altoInput').value = dowopAlto;
+    document.getElementById('tenorInput').value = dowopTenor;
+    document.getElementById('bassInput').value = dowopBass;
+}
+
+    // event handlers
+    var mybutton1 = document.getElementById("button1");
+    mybutton1.onclick = playIt;
+
+    var mybutton2 = document.getElementById("buttonReset");
+    mybutton2.onclick = resetDefault;
+
+    var motif_button = document.getElementById("playMotif");
+    motif_button.onclick = playMotif;
+
+	var phrase_button = document.getElementById("playPhrase");
+    phrase_button.onclick = playPhrase;
+    
+    var search_button = document.getElementById('searchButton');
+    search_button.onclick = doSearch;
+    
+    var search_phrase_button = document.getElementById('searchPhrase');
+    search_phrase_button.onclick = doDeepSearch;
+
+    var analyze_chorale_button = document.getElementById('analyze_chorale');
+    analyze_chorale_button.onclick = handleChoraleHarmonicAnalysis;
+
+    var melodic_analysis_button = document.getElementById('melodic_analysis');
+    melodic_analysis_button.onclick = doMelodicAnalysis;
+
+//    document.myForm.muteSound.onchange=updateMute;
+//    document.myForm.volume.onchange=updateVolume;
+//    document.myForm.tempo.onchange=updateTempo;
+    document.myForm.tempo_slider.onchange=updateTempo;
+    document.myForm.loopMelody.onchange=updateLoop;
+
+/*-----------------
+// this is done in the html element's onchange attribute now
+
+    document.myForm.muteSound.onchange=updateTheMute('soprano');
+    document.myForm.volume.onchange=updateTheVolume('soprano');
+    document.myForm.muteSound2.onchange=updateTheMute('alto');
+    document.myForm.volume2.onchange=updateTheVolume('alto');
+    document.myForm.muteSound3.onchange=updateTheMute('tenor');
+    document.myForm.volume3.onchange=updateTheVolume('tenor');
+    document.myForm.muteSound4.onchange=updateTheMute('bass');
+    document.myForm.volume4.onchange=updateTheVolume('bass');
+//-------------------*/
+</script>
+
+<script>
+var ChordAnalysisInstructions = "CHORD INSTRUCTIONS: select eighth note or quarter note chord duration then, Click 'chorale harmonic analysis' to analyze the chords of this chorale.";
+var Search1_Instructions = "SEARCH INSTRUCTIONS: Click the checkbox for Key, Time Signature or Pickup and choose from the menu.  Then click the search button";
+var Search2_Instructions = "SEARCH MOTIF INSTRUCTIONS: Enter a phrase into the text field and select which voice you want to search.  You can copy a passage from the lilypond fields below and paste into the text field.  Some common phrases are in the 'additional searches' menu.  Click the search phrase button";
+var PhrasePlayInstructions = "PHRASE INSTRUCTIONS: To play a single phrase choose the from the first menu the desired phrase number then click play phrase.  For multiple consecutive phrase click the Play Range checkbos then choose the starting phrase from menu 1 and the ending phrase from menu2. "
+var Search3_Instructions = "Click to Search for Highest Note of the selected voice."
+//-------------------------------------------------
+$(document).ready(function(){
+    $('.Search1').tooltip({title: Search1_Instructions, placement: "bottom"});
+    $('.Search2').tooltip({title: Search2_Instructions, placement: "bottom"});
+    $('.Search3').tooltip({title: Search3_Instructions, placement: "bottom"});
+    $('.ChordAnalysis').tooltip({title: ChordAnalysisInstructions, placement: "bottom"});
+    $('.Phrase').tooltip({title: PhrasePlayInstructions, placement: "bottom"});
+
+});
+//-------------------------------------------------*/
+
+//tooltip('Search1', Search1_Instructions);
+//tooltip('Search2', Search2_Instructions);
+//tooltip('ChordAnalysis', ChordAnalysisInstructions);
+//tooltip('Phrase', PhrasePlayInstructions);
+
+</script>
+
+
+
+<div id="footer"></div>
+<script src="lastModified.js"></script>
+</body>
+</html>
