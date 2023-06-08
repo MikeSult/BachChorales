@@ -4451,6 +4451,8 @@ function determineKey(chordContexts, keyNotes, localKey, localNotes){
     let keyNote_IsDone = false;
     let chordQ = '';
     let keyNote = '';
+    let keyNoteArray = []; // to be used with scaleScores
+    let chordQArray = [];
  
     // first and last chords are possible keys choices
     let firstChordName = chordContexts[0].fullName;
@@ -4481,6 +4483,7 @@ function determineKey(chordContexts, keyNotes, localKey, localNotes){
             relativeScaleRoot = minorRootToRelativeMajorRoot[keyNotes[0]];
             if(lastChordRoot == relativeScaleRoot) {
                 localKeyNotes = makeModeFromScale(keyNotes,3);
+                chordQ = '';
 //                localKeyNotes.push(makeModeFromScale(keyNotes,6));
             }
         }
@@ -4488,6 +4491,7 @@ function determineKey(chordContexts, keyNotes, localKey, localNotes){
         // check if localKey was a mixolydian mode (V chord)
         if(scaleScores3[3] == 5) {
             localKeyNotes = makeModeFromScale(keyNotes,5);
+            chordQ = '';
 //            localKeyNotes.push(keyNotes);
         }
 
@@ -4496,6 +4500,7 @@ function determineKey(chordContexts, keyNotes, localKey, localNotes){
 //            localKeyNotes.push(keyNotes);
         }
 //        console.log('scaleScores3= '+scaleScores3+'\nlocalKeyNotes= '+localKeyNotes);
+//        chordQArray.push(chordQ);
         localKeyNotes_IsDone = true;
     }
     /*-------------------------------------------------------------------
@@ -4536,7 +4541,7 @@ function determineKey(chordContexts, keyNotes, localKey, localNotes){
     }
 //----------------------------------------------------------------*/
 
-    // TODO use localKeyNotes and Cadence_type to filter down the choices
+    // use localKeyNotes and Cadence_type to filter down the choices
     // 
 
 //--------------------------------------------------------------------------
@@ -4546,8 +4551,9 @@ function determineKey(chordContexts, keyNotes, localKey, localNotes){
 //    console.log('localKeyNotes='+localKeyNotes+' is mult-array:'+Array.isArray(localKeyNotes[0]))
     if(Array.isArray(localKeyNotes[0])){
         for(let i=0; i<localKeyNotes.length; i++){
+            chordQ = '';
             scaleScores3 = compareTwoScales(localKeyNotes[i], keyNotes);
-            console.log('hello: scaleScores3['+i+']= '+scaleScores3+'\nlocalKeyNotes['+i+']= '+localKeyNotes[i]);
+//            console.log('hello: scaleScores3['+i+']= '+scaleScores3+'\nlocalKeyNotes['+i+']= '+localKeyNotes[i]);
 //            console.log('localKeyNotes='+localKeyNotes);
             arrayOfScores.push(scaleScores3);
             keyNote_IsDone = false;
@@ -4558,7 +4564,8 @@ function determineKey(chordContexts, keyNotes, localKey, localNotes){
                     if(lastChordRoot == relativeScaleRoot) {
                         my_localKeyNotes = makeModeFromScale(keyNotes,6);
                         keyNote = my_localKeyNotes[0];
-                        console.log('assignment keyNote='+keyNote);
+                        keyNoteArray.push(keyNote);
+//                        console.log('assignment keyNote='+keyNote);
                         chordQ = 'm';
                         keyNote_IsDone = true;
                     }
@@ -4567,26 +4574,30 @@ function determineKey(chordContexts, keyNotes, localKey, localNotes){
                     if(lastChordRoot == relativeScaleRoot) {
                         my_localKeyNotes = makeModeFromScale(keyNotes,3);
                         keyNote = my_localKeyNotes[0];
-                        console.log('assignment keyNote='+keyNote);
+                        keyNoteArray.push(keyNote);
+                        chordQ = '';
+//                        console.log('assignment keyNote='+keyNote);
                         keyNote_IsDone = true;
                     }
                 }
                 if(!keyNote_IsDone){
-                    console.log('scaleScores3[3]='+scaleScores3[3]);
+//                    console.log('scaleScores3[]='+scaleScores3[3]);
                     my_localKeyNotes = keyNotes;
                     keyNote = my_localKeyNotes[0];
-                    console.log('assignment keyNote='+keyNote);
+                    keyNoteArray.push(keyNote);
+//                    console.log('assignment keyNote='+keyNote);
                     keyNote_IsDone = true;
                 }
             }
             if(!keyNote_IsDone){
-                console.log('localKeyNotes='+localKeyNotes+'\nkeyNote NOT assigned');
+//                console.log('localKeyNotes=\n'+localKeyNotes.join('\n')+'\nkeyNote NOT assigned');
                 // is the root of the last chord the 1st note of this scale?
                 let calcFirstNote = localKeyNotes[i][0];
 //                console.log('lastChordRoot='+lastChordRoot+' calcFirstNote='+calcFirstNote);
                 if(lastChordRoot == calcFirstNote) {
                     keyNote = calcFirstNote;
-                    console.log('assignment keyNote='+keyNote);
+                    keyNoteArray.push(keyNote);
+//                    console.log('assignment keyNote='+keyNote);
                     keyNote_IsDone = true;
                 }
                 
@@ -4595,22 +4606,29 @@ function determineKey(chordContexts, keyNotes, localKey, localNotes){
 //                console.log('lastChordRoot='+lastChordRoot+' VchordRoot='+VchordRoot);
                 if(lastChordRoot == VchordRoot) {
                     keyNote = localKeyNotes[i][0];
+                    keyNoteArray.push(keyNote);
                     let isMajor = analyzeScaleAgainstMajor(localKeyNotes[i]);
                     let isMinor = analyzeScaleAgainstMinor(localKeyNotes[i]);
+                    let isHarmonicMajor = analyzeScaleAgainstHarmonicMajor(localKeyNotes[i]);
                     if(!isMajor[0] && isMinor[0] && isMinor[1][0] == localKeyNotes[i][0]) {
-                        keyNote += 'm';
+//                        keyNote += 'm';
+                        chordQ = 'm';
+                    } else if(isMajor[0]){
+                        chordQ = '';
                     }
-                    console.log('assignment keyNote='+keyNote);
+//                    console.log('assignment keyNote='+keyNote);
                     keyNote_IsDone = true;
                 }
 
+                // is the last chord the VI chord in a minor key, i.e. V - VI
                 let vi_chordRoot = minorRootToVIChordRoot[calcFirstNote];
 //                console.log('lastChordRoot = '+lastChordRoot+' vi_chordRoot = '+vi_chordRoot);
                 if(lastChordRoot == vi_chordRoot) {
 //                    my_localKeyNotes = makeModeFromScale(localKeyNotes[i],6);
 //                    console.log('localKeyNotes='+my_localKeyNotes);
                     keyNote = calcFirstNote;
-                    console.log('assignment keyNote='+keyNote);
+                    keyNoteArray.push(keyNote);
+//                    console.log('assignment keyNote='+keyNote);
                     chordQ = 'm';
                     keyNote_IsDone = true;
                 }
@@ -4622,9 +4640,10 @@ function determineKey(chordContexts, keyNotes, localKey, localNotes){
 //                console.log('lastChordRoot='+lastChordRoot+' relativeScaleRoot='+relativeScaleRoot);
                 if(lastChordRoot == relativeScaleRoot) {
                     my_localKeyNotes = makeModeFromScale(localKeyNotes[i],6);
-                    console.log('localKeyNotes='+my_localKeyNotes);
+//                    console.log('localKeyNotes='+my_localKeyNotes);
                     keyNote = my_localKeyNotes[0];
-                    console.log('assignment keyNote='+keyNote);
+                    keyNoteArray.push(keyNote);
+//                    console.log('assignment keyNote='+keyNote);
                     chordQ = 'm';
                     keyNote_IsDone = true;
                 }
@@ -4636,19 +4655,30 @@ function determineKey(chordContexts, keyNotes, localKey, localNotes){
                     my_localKeyNotes = makeModeFromScale(localKeyNotes[i],3);
 //                    console.log('keyNotes='+keyNotes+'\nlocalKeyNotes='+my_localKeyNotes);
                     keyNote = my_localKeyNotes[0];
-                    console.log('assignment keyNote='+keyNote);
+                    keyNoteArray.push(keyNote);
+//                    console.log('assignment keyNote='+keyNote);
+                    keyNote_IsDone = true;
+                }
+                // is the last note the 4th note of the this scale?
+                if(lastChordRoot == localKeyNotes[i][3]){
+                    keyNote = localKeyNotes[i][0];
+                    keyNoteArray.push(keyNote);
+//                    console.log('assignment keyNote='+keyNote);
                     keyNote_IsDone = true;
                 }
             }
+            chordQArray.push(chordQ);
         }
         // if still not done, maybe the key signature is the best choice
         if(!keyNote_IsDone) {
             keyNote = keyNotes[0];
-            console.log('assignment keyNote='+keyNote);
+            keyNoteArray.push(keyNote);
+//            console.log('assignment keyNote='+keyNote);
             keyNote_IsDone = true;
         }
     } else {
         // localKeyNotes is a single dimension array
+        chordQ = '';
         scaleScores3 = compareTwoScales(localKeyNotes, keyNotes);
 //        console.log('scaleScores3='+scaleScores3+'\nlocalKeyNotes='+localKeyNotes+'\nkeyNotes='+keyNotes);
         arrayOfScores.push(scaleScores3);
@@ -4661,7 +4691,8 @@ function determineKey(chordContexts, keyNotes, localKey, localNotes){
                 if(lastChordRoot == relativeScaleRoot) {
                     localKeyNotes = makeModeFromScale(keyNotes,6);
                     keyNote = localKeyNotes[0];
-                    console.log('assignment keyNote='+keyNote);
+                    keyNoteArray.push(keyNote);
+//                    console.log('assignment keyNote='+keyNote);
                     chordQ = 'm';
                     keyNote_IsDone = true;
                 }
@@ -4670,7 +4701,9 @@ function determineKey(chordContexts, keyNotes, localKey, localNotes){
                 if(lastChordRoot == relativeScaleRoot) {
                     localKeyNotes = makeModeFromScale(keyNotes,3);
                     keyNote = localKeyNotes[0];
-                    console.log('assignment keyNote='+keyNote);
+                    keyNoteArray.push(keyNote);
+                    chordQ = '';
+//                    console.log('assignment keyNote='+keyNote);
                     keyNote_IsDone = true;
                 }
             }
@@ -4680,33 +4713,39 @@ function determineKey(chordContexts, keyNotes, localKey, localNotes){
                     localKeyNotes = keyNotes;
 //                    console.log('if(scaleScores3[3] == 5) keyNotes='+keyNotes+'\nlocalKeyNotes='+localKeyNotes);
                 }
-                console.log('scaleScores3[3]='+scaleScores3[3]);
+//                console.log('scaleScores3[3]='+scaleScores3[3]);
 
                 keyNote = localKeyNotes[0];
-                console.log('assignment keyNote='+keyNote);
+                keyNoteArray.push(keyNote);
+//                console.log('assignment keyNote='+keyNote);
                 keyNote_IsDone = true;
             }
         }
         if(!keyNote_IsDone){
-            console.log('arrayOfScores= '+arrayOfScores);
+//            console.log('arrayOfScores= '+arrayOfScores);
             // is the root of the last chord the 1st note of localKeyNotes?
             let calcFirstNote = localKeyNotes[0];
             if(lastChordRoot == calcFirstNote) {
                 keyNote = localKeyNotes[0];
-                console.log('assignment keyNote='+keyNote);
+                keyNoteArray.push(keyNote);
+//                console.log('assignment keyNote='+keyNote);
                 keyNote_IsDone = true;
             }
             // is the root of the last chord the 5th note of this scale?
             let VchordRoot = localKeyNotes[4];
             if(lastChordRoot == VchordRoot) {
                 keyNote = localKeyNotes[0];
+                keyNoteArray.push(keyNote);
                 let isMajor = analyzeScaleAgainstMajor(localKeyNotes);
                 let isMinor = analyzeScaleAgainstMinor(localKeyNotes);
+                let isHarmonicMajor = analyzeScaleAgainstHarmonicMajor(localKeyNotes);
                 if(!isMajor[0] && isMinor[0] && isMinor[1][0] == localKeyNotes[0]) {
 //                    keyNote += 'm';
                     chordQ = 'm';
+                } else if(isMajor[0]){
+                    chordQ = '';
                 }
-                console.log('assignment keyNote='+keyNote);
+//                console.log('assignment keyNote='+keyNote);
                 keyNote_IsDone = true;
             }
             // is the root of the last chord the 6th note of this scale (relative minor)?
@@ -4714,7 +4753,8 @@ function determineKey(chordContexts, keyNotes, localKey, localNotes){
             if(lastChordRoot == relativeScaleRoot) {
                 localKeyNotes = makeModeFromScale(localKeyNotes,6);
                 keyNote = localKeyNotes[0];
-                console.log('assignment keyNote='+keyNote);
+                keyNoteArray.push(keyNote);
+//                console.log('assignment keyNote='+keyNote);
                 chordQ = 'm';
                 keyNote_IsDone = true;
             }
@@ -4723,18 +4763,50 @@ function determineKey(chordContexts, keyNotes, localKey, localNotes){
             if(lastChordRoot == relativeScaleRoot) {
                 localKeyNotes = makeModeFromScale(localKeyNotes,3);
                 keyNote = localKeyNotes[0];
-                console.log('assignment keyNote='+keyNote);
+                keyNoteArray.push(keyNote);
+                chordQ = '';
+//                console.log('assignment keyNote='+keyNote);
                 keyNote_IsDone = true;
             }
         }
+        chordQArray.push(chordQ);
     }
-//--------------------------------------------------------------------------
+    console.log('====================================');
+    let highestScore = -1;
+    let highestScoreIndex = -1;
+    let currentScore = 0;
+    for(let i=0; i<keyNoteArray.length; i++){
+        console.log('arrayOfScores['+i+']='+arrayOfScores[i]);
+        console.log('keyNoteArray['+i+']='+keyNoteArray[i]);
+        console.log('chordQArray['+i+']='+chordQArray[i]);
+        let oneScore = arrayOfScores[i];
+        let aKeyNote = keyNoteArray[i];
+        let quality = chordQArray[i];
+        if(oneScore[0] == 100 && oneScore[1] == 100 && oneScore[2] == 100){
+            if(oneScore[3] == 1){
+                keyNote = aKeyNote;
+                chordQ = quality;
+            }
+        } else if(oneScore[0] > highestScore){
+            highestScoreIndex = i;
+            highestScore = oneScore[0];
+            keyNote = aKeyNote;
+            chordQ = quality;
+        }
+
+    }
+    console.log('====================================');
+
+    //--------------------------------------------------------------------------
     if(keyNote == ''){
         console.log('determineKey()->keyNote is blank');
+    } else {
+        console.log('keyNote='+ keyNote + chordQ);
     }
     console.log('---------------------\ndetermineKey() end\n---------------------')
-    return (keyNote+chordQ);
+    return (keyNote + chordQ);
 }
+
 
 function makeKeyFromNotes(localKey, localNotes){
     console.log('---------------------\nmakeKeyFromNotes() start\n---------------------')
@@ -4760,7 +4832,7 @@ function makeKeyFromNotes(localKey, localNotes){
     let isLarge_localNotes = false;
     let highScore = 0;
 
-    if(localKey.length>8){
+    if(localKey.length>9){
         newLocalKey = localNotes;
         if(localNotes.length > 7){
             isLarge_localNotes = true;
@@ -4793,11 +4865,12 @@ function makeKeyFromNotes(localKey, localNotes){
         }
         if(numOfOneLetter == 0){
             missingLetters.push(array[index]);
-            // should add # or b version of this letter?
-            if(numSharps>1){
+            // add # or b version of this letter??? don't add E# or B#
+            if(numSharps>1 && array[index] != 'B' && array[index] != 'E' ) {
                 missingLetters.push( (array[index]+'#') ) 
             }
-            if(numFlats>1){
+            // don't add Fb or Cb
+            if(numFlats>1 && array[index] != 'F' && array[index] != 'C' ){
                 missingLetters.push( (array[index]+'b') ) 
             }
         }
@@ -4816,7 +4889,7 @@ function makeKeyFromNotes(localKey, localNotes){
         // find the letter that has two entries
         valid_notes.forEach(function(item, index, array){
             numOfOneLetter = 0;
-            for(let i=0; i<lenNewLocalKey; i++){
+            for(let i=0; i<newLocalKey.length; i++){
                 if(newLocalKey[i].includes(item)){
                     numOfOneLetter++;
                 }
@@ -4827,7 +4900,7 @@ function makeKeyFromNotes(localKey, localNotes){
             numOfEachLetter.push(numOfOneLetter);
         });
 
-        if(whichLetterHasMultiple && (whichLetterHasMultiple.length < 5) ) {
+        if(whichLetterHasMultiple.length && (whichLetterHasMultiple.length < 5) ) {
             let lettersLen = whichLetterHasMultiple.length;
             if(lettersLen > 1){
                 coreScaleNotes2 = newLocalKey; // we'll 'slice' coreScaleNotes2 multiple times
@@ -4939,8 +5012,8 @@ function makeKeyFromNotes(localKey, localNotes){
                     } else {
                         // add only the highest score
                         if(aScore[0] > highScore){
-                            myScaleScores = [];
-                            possibleScales = [];
+//                            myScaleScores = [];
+//                            possibleScales = [];
                             myScaleScores.push(aScore);
                             possibleScales.push(onePossibleScale);
                             highScore = aScore[0];
@@ -4980,11 +5053,12 @@ function makeKeyFromNotes(localKey, localNotes){
         }
     }
     if(indexOfHighScore!=-1){
-//        console.log('indicesOfHighScores='+indicesOfHighScores[0]+'\npossibleScales='+possibleScales);
+//        console.log('indicesOfHighScores='+indicesOfHighScores[0]+'\npossibleScales=\n'+possibleScales.join('\n'));
         for(let i=0; i<indicesOfHighScores.length; i++){
-            console.log('('+highScore+') Best choice scale='+possibleScales[indicesOfHighScores[i]]);
+//            console.log('('+highScore+') Best choice scale='+possibleScales[indicesOfHighScores[i]]);
             let isMajor = analyzeScaleAgainstMajor(possibleScales[indicesOfHighScores[i]]);
             let isMinor = analyzeScaleAgainstMinor(possibleScales[indicesOfHighScores[i]]);
+            let isHarmonicMajor = analyzeScaleAgainstHarmonicMajor(possibleScales[indicesOfHighScores[i]]);
 //            console.log('isMajor='+isMajor+' isMinor='+isMinor);
 
             if( isMajor[0] ){
@@ -5006,9 +5080,19 @@ function makeKeyFromNotes(localKey, localNotes){
 //                    keyRoot = isMinor[1][0] + 'm';
                 }
             }
+            if( isHarmonicMajor[0] ){
+//                console.log('Scale='+isMajor[1]);
+//                console.log('keyRoot='+isMajor[1][0]);
+                returnScales.push(isHarmonicMajor[1]);
+                if( (possibleScales[indicesOfHighScores[i]][0]) == (isHarmonicMajor[1][0]) ){
+//                    console.log('Choose ME!!!');
+//                    keyRoot = isMajor[1][0];
+                }
+
+            }
         }
     }
-    console.log('returnScales='+returnScales);
+    console.log('returnScales=\n'+returnScales.join('\n'));
     console.log('---------------------\nend makeKeyFromNotes()\n---------------------')
     return returnScales;
 }
@@ -5115,17 +5199,25 @@ function checkForCadence(chordContexts, chordLocs){
     }
 
     let localCalcKey = determineKey(chordContexts, myKeyScale, myLocalKeyToneJS, localNotes);
-    console.log('early in checkForCadence: localCalcKey='+localCalcKey);    
+//    console.log('early in checkForCadence: localCalcKey='+localCalcKey);    
 
     //-----------------------------------------------------------------------
     // AUTHENTIC cadence ----------------------------------------------------
-    // check if there is a circle progression and V-I
+    // check if there is a circle progression and V-I (also include vii-I)
     //-----------------------------------------------------------------------
     if(roots[len-1] == roots[len-2]){
         if(isCircleRootMvt(roots[len-3],roots[len-1])) {
             if( chordQualities[len-3] == '' || chordQualities[len-3] == '7' ){
                 if( chordQualities[len-1] == '' || chordQualities[len-1] == 'm' ){
-                    console.log('root='+roots[len-3]+' nextRoot='+roots[len-1]);
+//                    console.log('root='+roots[len-3]+' nextRoot='+roots[len-1]);
+                    cadenceName = cadenceNames[0];
+                    cadenceIndex = 0;
+                }
+            }
+        } else if(isStepwiseRootMvt(roots[len-3],roots[len-1])){
+            if( chordQualities[len-3] == 'dim' || chordQualities[len-3] == 'dim7' ){
+                if( chordQualities[len-1] == '' || chordQualities[len-1] == 'm' ){
+//                    console.log('root='+roots[len-3]+' nextRoot='+roots[len-1]);
                     cadenceName = cadenceNames[0];
                     cadenceIndex = 0;
                 }
@@ -5135,11 +5227,19 @@ function checkForCadence(chordContexts, chordLocs){
         if(isCircleRootMvt(roots[len-2],roots[len-1])) {
             if( chordQualities[len-2] == '' || chordQualities[len-2] == '7' ){
                 if( chordQualities[len-1] == '' || chordQualities[len-1] == 'm' ){
-                    console.log('root='+roots[len-2]+' nextRoot='+roots[len-1]);
+//                    console.log('root='+roots[len-2]+' nextRoot='+roots[len-1]);
                     cadenceName = cadenceNames[0];
                     cadenceIndex = 0;
                 }              
             }
+        } else if(isStepwiseRootMvt(roots[len-2],roots[len-1])){
+            if( chordQualities[len-2] == 'dim' || chordQualities[len-2] == 'dim7' ){
+                if( chordQualities[len-1] == '' || chordQualities[len-1] == 'm' ){
+//                    console.log('root='+roots[len-3]+' nextRoot='+roots[len-1]);
+                    cadenceName = cadenceNames[0];
+                    cadenceIndex = 0;
+                }
+            }            
         }
     }
     if(cadenceIndex!=-1){
@@ -5148,7 +5248,7 @@ function checkForCadence(chordContexts, chordLocs){
 //        return cadenceName;
         if(cadenceIndex == 0 || cadenceIndex == 1){ // V - I or IV - I
             keyNote = roots[len-1];
-            console.log('keyNote='+keyNote+' localCalcKey='+localCalcKey);
+//            console.log('keyNote='+keyNote+' localCalcKey='+localCalcKey);
             if( localCalcKey && (keyNote != localCalcKey) ){
                 keyNote = localCalcKey;
             }
@@ -5163,7 +5263,7 @@ function checkForCadence(chordContexts, chordLocs){
             chordQ = chordQualities[len-1];
 
         }
-        console.log('keyNote='+keyNote+chordQ);
+//        console.log('keyNote='+keyNote+chordQ);
         printSelectedChords(chordContexts, chordLocs, keyNote);
         chordContexts = addCalcKeyProperty(chordContexts, chordLocs, keyNote);
         console.log(chordContexts);
@@ -5179,7 +5279,7 @@ function checkForCadence(chordContexts, chordLocs){
         if(isBackCircleRootMvt(roots[len-3],roots[len-1])) {
             if( chordQualities[len-3] == '' || chordQualities[len-3] == 'm' ){
                 if( chordQualities[len-1] == '' || chordQualities[len-1] == 'm' ){
-                    console.log('root='+roots[len-3]+' nextRoot='+roots[len-1]);
+//                    console.log('root='+roots[len-3]+' nextRoot='+roots[len-1]);
                     cadenceName = cadenceNames[1];
                     cadenceIndex = 1;
                 }
@@ -5214,7 +5314,11 @@ function checkForCadence(chordContexts, chordLocs){
             keyNote = circleMovement[ roots[len-1] ];
             chordQ = chordQualities[len-1];
         }
-        console.log('keyNote='+keyNote+chordQ);
+        if(keyNote[-1]=='m'){
+//            console.log('keyNote='+keyNote);            
+        } else {
+//            console.log('keyNote='+keyNote+chordQ);
+        }
         printSelectedChords(chordContexts, chordLocs, keyNote);
         chordContexts = addCalcKeyProperty(chordContexts, chordLocs, keyNote);
         console.log(chordContexts);
@@ -5263,8 +5367,8 @@ function checkForCadence(chordContexts, chordLocs){
         //------------------*/
         Vchord = backCircleMovement[keyLetter];
 //        Vchord = backCircleMovement[localCalcKey];
-        console.log('(D2) root='+roots[len-2]+' localCalcKey='+localCalcKey+' Vchord='+Vchord);
-        console.log('(roots[len-2]==localCalcKey) = '+roots[len-2]==localCalcKey);
+//        console.log('(D2) root='+roots[len-2]+' localCalcKey='+localCalcKey+' Vchord='+Vchord);
+//        console.log('(roots[len-2]==localCalcKey) = '+roots[len-2]==localCalcKey);
         if(isStepwiseRootMvt(roots[len-2],roots[len-1]) && (roots[len-2]==Vchord) ) {
             if( chordQualities[len-2] == '' || chordQualities[len-2] == '7' ){
                 if( chordQualities[len-1] == '' || chordQualities[len-1] == 'm' ){
@@ -5316,7 +5420,7 @@ function checkForCadence(chordContexts, chordLocs){
 
     // if none found returns ( cadenceName = '' or cadenceIndex = -1)
 //    console.log('==============================');
-    console.log('cadenceIndex='+cadenceIndex);
+//    console.log('cadenceIndex='+cadenceIndex);
     if(cadenceIndex == 0 || cadenceIndex == 1){ // V - I or IV - I
         if(localCalcKey && (keyNote != localCalcKey)){
             keyNote = localCalcKey;
@@ -5327,7 +5431,7 @@ function checkForCadence(chordContexts, chordLocs){
         keyNote = circleMovement[ roots[len-2] ];
         chordQ = chordQualities[len-1];
     } else if(cadenceIndex == 3){  // any - V
-        console.log('hello3 keyNote='+keyNote+' roots[len-1]='+roots[len-1]);
+//        console.log('hello3 keyNote='+keyNote+' roots[len-1]='+roots[len-1]);
         if(keyNote != localCalcKey){
             keyNote = localCalcKey;
         }
@@ -5448,6 +5552,43 @@ function analyzeScaleAgainstMinor(scale){
     }
 
     return [false, scale];
+}
+
+function analyzeScaleAgainstHarmonicMajor(scale){
+    // scale is often sorted starting on 'A'
+    // but that usually isn't the root of the scale
+    // search from all starting note of scale
+    let numOfModes = scale.length;
+    let modeScale = [];
+    let harmMajor_idx = [0,2,4,5,7,8,11];
+    let root = '';
+    let majorScaleChrom = [];
+    let harmMajorScale = [];
+    let len = harmMajor_idx.length;
+    let score = [];
+    for(let n=0; n<numOfModes; n++){
+        majorScaleChrom = [];
+        harmMajorScale = [];
+        modeScale = makeModeFromScale(scale,(n+1));
+        root = modeScale[0];
+        majorScaleChrom = rootToScale[root];
+        if(!majorScaleChrom){ continue; }
+        for(let i=0; i<len; i++){
+            if(i==5){
+                let enharmonicNotes = majorScaleChrom[harmMajor_idx[i]].split('/');
+                harmMajorScale.push(enharmonicNotes[1]);
+                
+            } else {
+                harmMajorScale.push(majorScaleChrom[harmMajor_idx[i]]);
+            }
+        }
+        score = compareTwoScales(modeScale, harmMajorScale);
+        if(score[0]==100 && score[1]==100 && score[2]==100 && score[3]==1){
+            return [true, modeScale];
+        }
+    }
+    return [false, scale];
+    
 }
 
 
@@ -5754,6 +5895,16 @@ const stepwiseMovement = {
     'Cb': 'Db/Dbb', 'C': 'D/Db', 'C#': 'D#/D',
     'Db': 'Eb/Ebb', 'D': 'E/Eb', 'D#': 'E#/E',
     'Eb': 'F/Fb', 'E': 'F#/F', 'E#': 'Fx/F#',
-    'Fb': 'Gbg/Gbb', 'F': 'G/Gb', 'F#': 'G#/G',
+    'Fb': 'Gb/Gbb', 'F': 'G/Gb', 'F#': 'G#/G',
     'Gb': 'Ab/Abb', 'G': 'A/Ab', 'G#': 'A#/A'
+}
+
+const stepwiseMovementDown = {
+    'Ab': 'G/Gb', 'A': 'G#/G', 'A#': 'Gx/G#',
+    'Bb': 'A/Ab', 'B': 'A#/A', 'B#': 'Ax/A#',
+    'Cb': 'Bb/Bbb', 'C': 'B/Bb', 'C#': 'B#/B',
+    'Db': 'C/Cb', 'D': 'C#/C', 'D#': 'Cx/C#',
+    'Eb': 'D/Db', 'E': 'D#/D', 'E#': 'Dx/D#',
+    'Fb': 'Eb/Ebb', 'F': 'E/Eb', 'F#': 'E#/E',
+    'Gb': 'F/Fb', 'G': 'F#/F', 'G#': 'Fx/F#'
 }

@@ -305,11 +305,11 @@ const BachChorales = [
     soprano: "\\relative c' { d8 e fis4 g a a g fis e4\\fermata a4 b cis d cis b2 a4\\fermata a4 d cis b a g fis e4\\fermata a4 g fis e8 fis g4 fis e d4\\fermata  \\bar \"|.\" }",
     alto: "\\relative c' { a4 d d e d8 cis b cis d4 cis e fis8 gis a4 b a4~a4 gis4 e e fis e d8 e fis4 e a,8 b cis4 fis8 e d e4 d8~d8 cis8 d4 d cis a }",
     tenor: "\\relative c { fis8 g a4 g8 fis e4 fis g a a a d e e e fis e8 d cis4 cis8 b a fis g a b4 b b8 cis d4 a cis b8 a a4 a g a4. g8 fis4 }",
-    bass: "\\relative c { d4 d8 cis b4 cis d e fis8 g a4 cis b a gis a d, e a,4\\fermata a'8 g fis d e fis g fis e dis e4 fis8 gis a4\\fermata fis b,8 cis d4 a b a8 g a4 d,4\\fermata  \\bar \"|.\" }",
+    bass: "\\relative c { d4 d8 cis b4 cis d e fis8 g a4\\fermata cis b a gis a d, e a,4\\fermata a'8 g fis d e fis g fis e dis e4 fis8 gis a4\\fermata fis b,8 cis d4 a b a8 g a4 d,4\\fermata  \\bar \"|.\" }",
 },
 {
     meta: "\\opus Chorale no.45 \\composer J.S.Bach \\title Kommt her zu mir, spricht. \\key b \\minor \\time 4/4 \\partial 4",
-    soprano: "\\relative c'' { b4 b b fis' e fis8 e d4 cis\\fermata b8 cis d4 cis d8 e fis4 e d cis\\fermata d8 cis b4 b e4. d8 cis d16 e d8 cis b2 a4\\fermata a4 d cis d8 e fis4 e d cis\\fermata b8 cis d4 cis d8 e fis4 e d cis\\fermata fis4 fis fis e4. d8 cis4 d8 e cis2 b4  \\bar \"|.\" }",
+    soprano: "\\relative c'' { b4 b b fis' e fis8 e d4 cis\\fermata b8 cis d4 cis d8 e fis4 e d cis\\fermata d8 cis b4 b e4. d8 cis d16 e d8 cis b2 a4\\fermata a4 d cis d8 e fis4 e d cis\\fermata b8 cis d4 cis d8 e fis4 e d cis\\fermata fis4 fis fis e4. d8 cis4 d8 e cis2 b4\\fermata  \\bar \"|.\" }",
     alto: "\\relative c' { fis4 g g fis8 gis ais b cis4 b ais b8 ais b4 fis fis fis b8 cis fis, gis ais4 b fis e8 fis gis2 a4 a a gis e fis b cis8 ais b4 b b8 cis fis,4 fis fis e e fis8 g a4 g fis fis fis8 e d fis b a g fis e4~e4 d8 g g4 fis8 e dis4 }",
     tenor: "\\relative c' { d4 e e d g fis fis fis fis8 e fis4 fis8 e d cis b d d cis d b cis4 fis8 e d cis b4 b cis8 d e4 a, fis' e8 d cis4 d8 e fis4 fis fis8 e d4 d8 cis cis b ais4 d8 cis b gis a4 a d d8 cis cis b ais4 cis cis b b2 a8 g' fis b, b4 ais fis }",
     bass: "\\relative c { b4 e8 fis g a b d cis b ais fis b b, fis'4\\fermata d8 cis b b' ais fis b cis d b gis ais b b, fis4\\fermata b4 b'8 a gis fis e d cis b a cis fis e d b e e, a4\\fermata d8 cis b b' ais fis b cis d b gis ais b b, fis'4\\fermata b8 a gis e a g fis e d cis b ais b4 fis'\\fermata ais,4 b8 cis d dis d fis g gis a ais b g e cis fis fis, b4\\fermata \\bar \"|.\" }",
