@@ -16,21 +16,26 @@
 	<script type="text/javascript" src="https://www.guitarland.com/javascripts/StartAudioContext.js"></script>
     <script src="https://www.guitarland.com/javascripts/instruments.js"></script>
     <script src="https://www.guitarland.com/javascripts/Rhythm.js"></script>
-
-	<script src="../../../../Github/lilyPondAdapterJS/lilyPondAdapter.js"></script>
-
     <script src="https://www.guitarland.com/javascripts/scaleSpelling.js"></script>
+
+<!-- development local files -->
+	<script src="../lilyPondAdapterJS/lilyPondAdapter.js"></script>
+
     <script src="BachChorales.js"></script>
     <script src="MusicAnalysis.js"></script>
-<!--
+
+
+<!-- deployment files -->
+<!-- deployment files ------------------------------
     <script src="https://www.guitarland.com/javascripts/lilyPondAdapter.js"></script>
-    <script src="../PracticeRoom/instruments.js"></script>
-    <script src="../../../Github/RhythmJS/Rhythm.js"></script>
-
+    <script src="https://www.guitarland.com/javascripts/BachChorales.js"></script>
     <script src="https://www.guitarland.com/javascripts/MusicAnalysis.js"></script>
+------------------------------------------------ -->
 
-    <script src="https://unpkg.com/vue"></script>
--->
+<!-- not using vue yet -->
+<!-- ---------------------
+<script src="https://unpkg.com/vue"></script>
+---------------------- -->
 
 <style>
 .grid-container {
@@ -96,17 +101,12 @@ nav {
     
 }
 </style>
-
-
     
 <script>
-
 function tooltip(element, tip) {
-    var el = document.getElementById(element);
+    let el = document.getElementById(element);
     el.setAttribute('tooltip', tip);
 }
-
-
 
 function stopIt(){
 	Tone.Transport.stop();
@@ -157,7 +157,7 @@ function updateTheMute(whichOne)  {
 }
 
 function getMuteState() {
-    var muteState = [];
+    let muteState = [];
     muteState.push(document.myForm.muteSound.checked);
     muteState.push(document.myForm.muteSound2.checked);
     muteState.push(document.myForm.muteSound3.checked);
@@ -165,7 +165,7 @@ function getMuteState() {
     return muteState;
 }
 function getSoloState() {
-    var soloState = [];
+    let soloState = [];
     soloState.push(document.myForm.soloSound1.checked);
     soloState.push(document.myForm.soloSound2.checked);
     soloState.push(document.myForm.soloSound3.checked);
@@ -178,10 +178,10 @@ function updateTheSolo(whichOne) {
 	if(sopranoMelodyLine == undefined){
 		return;
 	}
-    var soloSoundBoolean = false;
-    var muteSoundBoolean = false;
-    var muteState = getMuteState();
-    var soloState = getSoloState();
+    let soloSoundBoolean = false;
+    let muteSoundBoolean = false;
+    let muteState = getMuteState();
+    let soloState = getSoloState();
     const sop = 0;
     const alto = 1;
     const tenor = 2;
@@ -299,32 +299,29 @@ function updateTheVolume(whichOne)  {
     if(whichOne == 'soprano') {
         if(sopranoSynth) {
 	        sopranoSynth.volume.value = document.myForm.volume1_slider.value;
-	        var slider1 = document.getElementById("volume1_display");
+	        let slider1 = document.getElementById("volume1_display");
 	        slider1.innerHTML = document.myForm.volume1_slider.value;
 	    }
 	} else if(whichOne == 'alto') {
 	    if(altoSynth) {
 	        altoSynth.volume.value = document.myForm.volume2_slider.value;
-	        var slider2 = document.getElementById("volume2_display");
+	        let slider2 = document.getElementById("volume2_display");
 	        slider2.innerHTML = document.myForm.volume2_slider.value;
 	    }
 	} else if(whichOne == 'tenor') {
 	    if(tenorSynth) {
 	        tenorSynth.volume.value = document.myForm.volume3_slider.value;
-	        var slider3 = document.getElementById("volume3_display");
+	        let slider3 = document.getElementById("volume3_display");
 	        slider3.innerHTML = document.myForm.volume3_slider.value;
 	    }
 	} else if(whichOne == 'bass') {
 	    if(bassSynth) {
 	        bassSynth.volume.value = document.myForm.volume4_slider.value;
-	        var slider4 = document.getElementById("volume4_display");
+	        let slider4 = document.getElementById("volume4_display");
 	        slider4.innerHTML = document.myForm.volume4_slider.value;
 	    }
 	}
 }
-
-
-
 
 function getKey()  {
 	 return document.myForm.key.value;
@@ -353,8 +350,8 @@ function updateLoop() {
 // transition to using the opus instead of title to create menu
 function makeChoraleMenu() {
     // create an array of titles
-    var oneTitle;
-    var titles = [];
+    let oneTitle;
+    let titles = [];
     BachChorales.forEach(element => {
         oneTitle = getMetaOpus(element.meta);
         if(oneTitle) {
@@ -365,7 +362,7 @@ function makeChoraleMenu() {
         oneTitle = ''; //  = null?
     });
 
-    var html = "<select id='BachChorales'>";
+    let html = "<select id='BachChorales'>";
     titles.forEach( title => {
         html += "<option value='"+ title +"'>"+ title + "</option>";
     });
@@ -377,9 +374,9 @@ function makeChoraleMenu() {
 // transition to using the opus instead of title to create menu
 function makeShortChoraleMenu(start, end) {
     // create an array of titles
-    var titles = [];
-    var myStart = Number(start);
-    var myEnd =  Number(end);
+    let titles = [];
+    let myStart = Number(start);
+    let myEnd =  Number(end);
     BachChorales.forEach((element, index) => {
         if(index >= myStart && index <= myEnd ) {
             oneTitle = getMetaOpus(element.meta);
@@ -392,7 +389,7 @@ function makeShortChoraleMenu(start, end) {
         }
     })
 
-    var html = "<select id='BachChorales'>";
+    let html = "<select id='BachChorales'>";
     titles.forEach( title => {
         html += "<option value='"+ title +"'>"+ title + "</option>";
     });
@@ -404,12 +401,12 @@ function makeShortChoraleMenu(start, end) {
 }
 
 function makeChoraleRangeChoices() {
-    var numOfChorales = BachChorales.length;
-    var range = 20;
-    var rangeStart = 0;
-    var ranges = [];
-    var oneRange = [];
-    for(var i=0; i<numOfChorales; i++) {
+    let numOfChorales = BachChorales.length;
+    let range = 20;
+    let rangeStart = 0;
+    let ranges = [];
+    let oneRange = [];
+    for(let i=0; i<numOfChorales; i++) {
         if(i === rangeStart ) {
             oneRange.push(i);
         }
@@ -427,25 +424,42 @@ function makeChoraleRangeChoices() {
 //            console.log("one range="+oneRange+" numOfChorales-1="+(numOfChorales-1));
             oneRange = [];            
     }
-    var html = '<p>Load Chorales into menu</p><p>'
+/*-------------------------------------------------------
+	var html = '<p>Load Chorales into menu</p><p>'
     var start;
     var end;
     ranges.forEach( element => {
         html += ' <a href="javascript:makeShortChoraleMenu('+element[0]+','+element[1]+')">'+(element[0]+1)+'-'+(element[1]+1)+'</a> &nbsp;&nbsp;';
     });
     html += '</p>';
-    return html;
+//-------------------------------------------------------------*/
+    let html2 = "<select id='ChoraleRanges' onchange='loadTheMenuWithValues()'>";
+    ranges.forEach( element => {
+        html2 += "<option value='"+ element +"'>"+ (element[0]+1)+'-'+(element[1]+1) + "</option>";
+    });
+    html2 += "</select>";
+//    document.getElementById('RangeMenu').innerHTML = html2;
+
+    return html2;
+}
+
+function loadTheMenuWithValues() {
+	let oneRange = document.getElementById('ChoraleRanges').value;
+	let twoNumbers = oneRange.split(',');
+//	console.log('oneRange='+oneRange);
+	makeShortChoraleMenu( parseInt(twoNumbers[0]), parseInt(twoNumbers[1]) );
 }
 
 function loadPresetUserPhrase() {
-    var phrase = document.getElementById('userPhraseChoices').value;
+    let phrase = document.getElementById('userPhraseChoices').value;
     document.getElementById('userPhrase').value = phrase;
 }
 
 
 function addMenu() {
 //    document.getElementById('Menu').innerHTML = makeChoraleMenu();
-    document.getElementById('Ranges').innerHTML = makeChoraleRangeChoices();
+    document.getElementById('RangeMenu').innerHTML = makeChoraleRangeChoices();
+//    document.getElementById('Ranges').innerHTML = makeChoraleRangeChoices();
     makeShortChoraleMenu(0,30);
     var chorale_menu = document.getElementById('BachChorales');
     chorale_menu.onchange = loadBachChorale;
@@ -456,7 +470,7 @@ function addMenu() {
 
 // var phraseLocs = ['2*1m + 4n','4*1m + 2n + 4n','6*1m', '8*1m + 2n + 4n'];
 function makePhraseMenu(phraseLocs) {
-    var html = "<select id='phraseMenu' onchange='loadPhrase()'>";
+    let html = "<select id='phraseMenu' onchange='loadPhrase()'>";
     phraseLocs.forEach( (element, index) => {
         html += "<option value='"+ element +"'> phrase "+ (index+1) + "</option>";
     });
@@ -465,7 +479,7 @@ function makePhraseMenu(phraseLocs) {
 }
 
 function makePhraseMenu2(phraseLocs,selectID) {
-    var html = "<select id='"+selectID+"'>";
+    let html = "<select id='"+selectID+"'>";
     phraseLocs.forEach( (element, index) => {
         html += "<option value='"+ element +"'> phrase "+ (index+1) + "</option>";
     });
@@ -540,11 +554,10 @@ function nameToSynth(name) {
 <body onload="addMenu();">
 <div id="Content">
 
-
 <form name="myForm">
 
 <nav id='playDiv'>
-<p id="Menu"></p>
+<p><span id="Menu"></span> <span id="RangeMenu"></span></p>
 <p>
 <input type="button" class="playButton" VALUE="Play" id="button1">
 <input type="button" class="stopButton" VALUE="Stop" onclick="stopIt()">(click stop in between replays)  
@@ -857,10 +870,12 @@ chord analysis (alpha version) The chords are added to the lilypond file (below)
 </p>
 <div id='ChordResults'></div>
 <div id='choraleInfo'></div>
+
+<!-------------------
+
 <a name='playMenu'></a>
 <div id="Ranges"></div>
 
-<!-------------------
 <form name="myForm">
 
 <nav id='playDiv'>
@@ -1162,6 +1177,7 @@ function makeLilyFile(data) {
 
 //-----------------------------------------------------*/
     
+// Tone.js values
     var myStartTime = '0';
     var myLoopStart = '0';
     var loopTotalTime = '0';
@@ -1900,6 +1916,7 @@ function loadBachChoraleWithAnalysis(harmonies, romanNumerals) {
 }
 
 function loadPhrase(){
+	// phraseScore is global, created by LoadChorale()
 	var index = getChoraleIndex();
 	var meta = BachChorales[index].meta;
 
@@ -1922,7 +1939,7 @@ function experimentsChordObjects(phraseIndex){
 	let numOfPhrases = phraseScore.length;
 	console.log('numOfPhrases = '+numOfPhrases);
 	let chordObjectsFullChorale = [];
-	//----------------------------------------------------
+	/*----------------------------------------------------
 	for(let i=0; i<numOfPhrases; i++){
 		let phraseScale = makeScaleFromPhraseNotes(phraseScore[i]);
 	    let chordObjects = loadChordArray(phraseScore[i]);
@@ -1954,7 +1971,7 @@ function experimentsChordObjects(phraseIndex){
 	console.log(chordObjectsFullChorale);
     //-----------------------------------------------------------------*/
 
-	/*----------------------------------------------------
+	//----------------------------------------------------
 	// ---------- experiments with chordObjects --------------------------
 	let phraseScale = makeScaleFromPhraseNotes(phraseScore[phraseIndex]);
 	let chordObjects = loadChordArray(phraseScore[phraseIndex]);
@@ -1977,6 +1994,14 @@ function experimentsChordObjects(phraseIndex){
 	} while(chordObjects[lastChordPos].fullName == chordObjects[move_index].fullName)
 
 	// now the chordObjects can be used to distinguish II-V-I from V-I-IV etc.
+	let chordLocs = findLastXChords(chordObjects, 3);
+	let cadenceIndex = checkForCadence(chordObjects, chordLocs); 
+
+    console.log('chordLocs='+chordLocs+' cadenceIndex='+cadenceIndex+'\ncadenceType =\n'+cadenceNames[cadenceIndex]);
+    console.log('======= phrase no.'+(phraseIndex+1)+' =========\n');
+    //-----------------------------------------------------------------*/
+
+	/* -------------------------------------------------------------------
 	
 //	let VtoI = findV_I(chordObjects);
 //	let IItoVtoI = findII_V_I(chordObjects);
@@ -1990,7 +2015,6 @@ function experimentsChordObjects(phraseIndex){
 	// printOut_V_I_Report(chordObjects, VtoI);
 	// printOut_II_V_I_Report(chordObjects, IItoVtoI);
 	// printOutCircles(chordObjects,circles);
-	// -------------------------------------------------------------------
     //-----------------------------------------------------------------*/
 }
 
